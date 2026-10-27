@@ -1,0 +1,3308 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>태권도장 올인원 관리 시스템</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #1A4985; 
+            --hover-color: #3165A8;
+            --bg-color: #F4F7F9; 
+            --white: #FFFFFF;
+            --text-dark: #111111;
+            --border-color: #CBD5E0;
+            --danger-color: #E53E3E;
+            --success-color: #38A169;
+            --warning-color: #DD6B20;
+            --kakao-yellow: #FEE500;
+            --kakao-brown: #3C1E1E;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: var(--white);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo-area { display: flex; align-items: center; gap: 0.6rem; }
+        .logo { font-size: 1.5rem; font-weight: bold; letter-spacing: 1px; cursor: pointer; }
+        .btn-edit-name {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--white);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 0.25rem 0.6rem;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-edit-name:hover { background: rgba(255, 255, 255, 0.35); }
+
+        .nav-menu { display: flex; list-style: none; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
+        .nav-menu li {
+            padding: 0.65rem 1.1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+        }
+        .nav-menu li:hover, .nav-menu li.active { background-color: var(--hover-color); }
+        .btn-kiosk-nav {
+            background-color: var(--success-color);
+            color: var(--white);
+            border: none;
+            padding: 0.65rem 1rem;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 0.5rem;
+        }
+        .btn-kiosk-nav:hover { background-color: #2F855A; }
+
+        main { max-width: 1380px; margin: 2rem auto; padding: 0 1rem; }
+        .section-container {
+            background-color: var(--white);
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            min-height: 450px;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .hidden { display: none !important; }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        .summary-card {
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border-left: 5px solid var(--primary-color);
+            text-align: center;
+        }
+        .summary-card h4 { color: #555; margin-bottom: 0.5rem; font-size: 0.95rem; }
+        .summary-card .num { font-size: 2rem; font-weight: bold; color: var(--primary-color); }
+
+        .backup-card {
+            background: #F8FAFC;
+            border: 2px solid #CBD5E0;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .backup-info h3 { color: var(--primary-color); font-size: 1.15rem; margin-bottom: 0.3rem; }
+        .backup-info p { color: #555; font-size: 0.88rem; }
+        .backup-btn-group { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+        .btn-backup-save {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 1.3rem;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.92rem;
+        }
+        .btn-backup-save:hover { background-color: var(--hover-color); }
+        .btn-backup-load {
+            background-color: var(--white);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            padding: 0.75rem 1.3rem;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.92rem;
+        }
+        .btn-backup-load:hover { background-color: #EBF8FF; }
+
+        .upload-banner {
+            background: #EBF8FF;
+            border: 2px dashed #3182CE;
+            border-radius: 8px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .upload-banner-info h4 { color: #2B6CB0; margin-bottom: 0.2rem; font-size: 1.05rem; }
+        .upload-banner-info p { font-size: 0.85rem; color: #4A5568; }
+        .upload-btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .btn-upload {
+            background-color: #2B6CB0;
+            color: white;
+            padding: 0.65rem 1.1rem;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            font-size: 0.88rem;
+        }
+        .btn-upload:hover { background-color: #2C5282; }
+        .btn-excel-export {
+            background-color: #1D6F42;
+            color: white;
+            padding: 0.65rem 1.1rem;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            font-size: 0.88rem;
+        }
+        .btn-excel-export:hover { background-color: #145330; }
+        .btn-hwp-paste {
+            background-color: #047857;
+            color: white;
+            padding: 0.65rem 1.1rem;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            font-size: 0.88rem;
+        }
+        .btn-hwp-paste:hover { background-color: #065F46; }
+        .btn-sample {
+            background-color: var(--white);
+            color: #2B6CB0;
+            border: 1px solid #2B6CB0;
+            padding: 0.65rem 0.9rem;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .hwp-paste-box {
+            background: #ECFDF5;
+            border: 2px solid #10B981;
+            border-radius: 8px;
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+        .hwp-paste-editor {
+            width: 100%;
+            min-height: 150px;
+            max-height: 320px;
+            overflow-y: auto;
+            padding: 0.8rem;
+            background: var(--white);
+            border: 1px solid #A7F3D0;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin: 0.6rem 0;
+            outline: none;
+            white-space: pre-wrap;
+        }
+        .hwp-paste-editor:empty:before {
+            content: attr(data-placeholder);
+            color: #9CA3AF;
+        }
+        .hwp-paste-editor table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0.3rem 0;
+        }
+        .hwp-paste-editor td, .hwp-paste-editor th {
+            border: 1px solid #CBD5E0;
+            padding: 4px 6px;
+            font-size: 0.8rem;
+        }
+
+        .form-container { background-color: var(--bg-color); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; }
+        .form-container h3 { margin-bottom: 1rem; color: var(--primary-color); }
+        .input-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+            gap: 0.85rem;
+            margin-bottom: 1rem;
+            align-items: end;
+        }
+        .input-box { display: flex; flex-direction: column; gap: 0.25rem; }
+        .input-box label { font-size: 0.8rem; font-weight: bold; color: #444; }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.65rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            background: var(--white);
+        }
+        .btn-submit {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 0.85rem 2rem;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn-submit:hover { background-color: var(--hover-color); }
+
+        .table-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+        .search-box-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex: 1;
+            min-width: 240px;
+            max-width: 380px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.55rem 0.9rem;
+            border: 2px solid var(--primary-color);
+            border-radius: 20px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .search-input:focus {
+            box-shadow: 0 0 0 3px rgba(26, 73, 133, 0.15);
+        }
+        .bulk-action-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .btn-bulk-delete {
+            background-color: #C53030;
+            color: var(--white);
+            border: none;
+            padding: 0.55rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.88rem;
+        }
+        .btn-bulk-delete:hover { background-color: #9B2C2C; }
+        .btn-all-delete {
+            background-color: #742A2A;
+            color: var(--white);
+            border: none;
+            padding: 0.55rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.88rem;
+        }
+        .btn-all-delete:hover { background-color: #63171B; }
+        .btn-reset-tuition {
+            background-color: var(--warning-color);
+            color: var(--white);
+            border: none;
+            padding: 0.55rem 1.1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .btn-reset-tuition:hover { background-color: #C05621; }
+
+        .table-container { overflow-x: auto; margin-top: 0.5rem; }
+        table { width: 100%; border-collapse: collapse; text-align: center; background-color: var(--white); font-size: 0.88rem; }
+        th, td { padding: 0.75rem 0.5rem; border-bottom: 1px solid var(--border-color); }
+        th { background-color: var(--bg-color); color: var(--primary-color); white-space: nowrap; }
+        .action-cell-btns { display: flex; gap: 0.35rem; justify-content: center; white-space: nowrap; }
+        .btn-edit {
+            background-color: #2B6CB0;
+            color: white;
+            border: none;
+            padding: 0.35rem 0.65rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .btn-edit:hover { background-color: #1A4985; }
+        .btn-delete {
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 0.35rem 0.65rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .btn-delete:hover { opacity: 0.85; }
+        .btn-status-toggle {
+            border: none;
+            padding: 0.3rem 0.7rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+        .status-active { background-color: #DEF7EC; color: #03543F; border: 1px solid #31C48D; }
+        .status-withdrawn { background-color: #FDE8E8; color: #9B1C1C; border: 1px solid #F98080; }
+        .row-withdrawn { opacity: 0.55; background-color: #F9FAFB; }
+        .grade-tag { display: inline-block; color: var(--primary-color); font-weight: bold; margin-left: 0.15rem; }
+        .row-checkbox { transform: scale(1.3); cursor: pointer; }
+
+        .pagination-wrap {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.4rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .page-btn {
+            background: var(--white);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+            padding: 0.45rem 0.85rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.15s;
+        }
+        .page-btn:hover:not(:disabled) {
+            background: #EBF8FF;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        .page-btn.active {
+            background: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .page-info-text { font-size: 0.88rem; color: #555; margin-left: 0.8rem; font-weight: bold; }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 6000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+        .modal-card {
+            background: var(--white);
+            border-radius: 12px;
+            max-width: 780px;
+            width: 100%;
+            padding: 1.8rem;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.8rem;
+            margin-bottom: 1.2rem;
+        }
+        .modal-header h3 { color: var(--primary-color); font-size: 1.3rem; }
+        .btn-modal-close { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #666; }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.6rem;
+            margin-top: 1.2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .btn-cancel {
+            background: #E2E8F0;
+            color: #333;
+            border: none;
+            padding: 0.7rem 1.4rem;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-save-edit {
+            background: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 0.7rem 1.8rem;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .attendance-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.15fr;
+            gap: 2rem;
+            align-items: start;
+            margin-bottom: 2rem;
+        }
+        .keypad-container {
+            width: 100%;
+            max-width: 360px;
+            margin: 0 auto;
+            background: var(--bg-color);
+            padding: 1.8rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .keypad-display {
+            background: var(--white);
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.2rem;
+            letter-spacing: 10px;
+            height: 75px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--border-color);
+            color: var(--primary-color);
+        }
+        .keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .key-btn {
+            background: var(--white);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+            padding: 1.2rem 0;
+            font-size: 1.4rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .key-btn:hover { background: #E2E8F0; }
+        .key-btn.action-btn { background: #CBD5E0; color: #333; }
+        .key-btn.submit-btn { background: var(--success-color); color: white; border: none; }
+
+        /* === 키오스크 전체화면 & 관리자 잠금 모달 스타일 === */
+        .kiosk-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #1A4985 0%, #0F294A 100%);
+            z-index: 5000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            color: var(--white);
+        }
+        .kiosk-top-bar { position: absolute; top: 20px; right: 25px; display: flex; gap: 0.6rem; align-items: center; }
+        .btn-kiosk-exit {
+            background: rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.9);
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .kiosk-sync-pill {
+            background: rgba(56, 161, 105, 0.85);
+            color: #fff;
+            padding: 0.45rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: bold;
+        }
+        .kiosk-header { text-align: center; margin-bottom: 1.8rem; }
+        .kiosk-header h1 { font-size: 2.4rem; margin-bottom: 0.4rem; }
+        .kiosk-header p { font-size: 1.15rem; color: #BEE3F8; }
+        .kiosk-box {
+            background: var(--white);
+            padding: 2.2rem;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+        }
+        .kiosk-box .keypad-display { height: 90px; font-size: 3rem; margin-bottom: 1.5rem; background: #F8FAFC; }
+        .kiosk-box .key-btn { padding: 1.4rem 0; font-size: 1.8rem; border-radius: 12px; }
+
+        .pin-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.72);
+            z-index: 7000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+        .pin-modal-card {
+            background: var(--white);
+            color: var(--text-dark);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 340px;
+            padding: 1.6rem;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+        }
+        .pin-modal-card h3 { color: var(--primary-color); margin-bottom: 0.3rem; font-size: 1.25rem; }
+        .pin-modal-card p { font-size: 0.85rem; color: #666; margin-bottom: 1rem; }
+        .pin-dots-display {
+            background: #F1F5F9;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            height: 60px;
+            font-size: 2rem;
+            letter-spacing: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .pin-keypad-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .pin-key-btn {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.9rem 0;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-dark);
+        }
+        .pin-key-btn:active { background: #E2E8F0; }
+        .pin-key-btn.pin-cancel { background: #FEE2E2; color: #991B1B; border-color: #FCA5A5; font-size: 1rem; }
+        .pin-key-btn.pin-clear { background: #E2E8F0; color: #334155; font-size: 1rem; }
+
+        .alimtalk-box {
+            background: #FFFDF0;
+            border: 2px solid #FDE047;
+            border-radius: 12px;
+            padding: 1.4rem;
+            margin-bottom: 1rem;
+        }
+        .alimtalk-box h3 { color: var(--kakao-brown); margin-bottom: 0.6rem; font-size: 1.1rem; }
+        .alimtalk-option { margin-bottom: 0.8rem; }
+        .alimtalk-option input {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-top: 0.25rem;
+            font-size: 0.88rem;
+        }
+        .bot-status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: bold;
+            background: #DEF7EC;
+            color: #03543F;
+            border: 1px solid #31C48D;
+            margin-bottom: 0.6rem;
+        }
+
+        .sync-box {
+            background: #F0F9FF;
+            border: 2px solid #38BDF8;
+            border-radius: 12px;
+            padding: 1.4rem;
+        }
+        .sync-box h3 { color: #0369A1; margin-bottom: 0.5rem; font-size: 1.1rem; }
+        .sync-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .sync-row input {
+            flex: 1;
+            min-width: 160px;
+            padding: 0.6rem 0.8rem;
+            border: 1px solid #7DD3FC;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .btn-sync-connect {
+            background: #0284C7;
+            color: white;
+            border: none;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.88rem;
+        }
+        .btn-sync-connect:hover { background: #0369A1; }
+        .btn-sync-push {
+            background: #0D9488;
+            color: white;
+            border: none;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .btn-sync-push:hover { background: #0F766E; }
+
+        .perfect-attendance-box {
+            background: #F8FAFC;
+            border: 2px solid #CBD5E0;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        .perfect-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .perfect-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .perfect-controls input, .perfect-controls select {
+            padding: 0.5rem 0.7rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .toast-popup {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--kakao-yellow);
+            color: var(--kakao-brown);
+            padding: 1.2rem 1.8rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            font-weight: bold;
+            z-index: 9999;
+            border: 2px solid var(--kakao-brown);
+            max-width: 400px;
+            font-size: 1.05rem;
+        }
+
+        .filter-container { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+        .btn-filter {
+            padding: 0.55rem 1.1rem;
+            border: 1px solid var(--primary-color);
+            background-color: var(--white);
+            color: var(--primary-color);
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .btn-filter.active { background-color: var(--primary-color); color: var(--white); }
+        .status-badge { display: inline-block; padding: 0.3rem 0.8rem; border-radius: 12px; font-size: 0.85rem; font-weight: bold; color: white; }
+        .status-paid { background-color: var(--success-color); }
+        .status-unpaid { background-color: var(--warning-color); }
+        .tuition-checkbox { transform: scale(1.5); cursor: pointer; margin-right: 0.5rem; vertical-align: middle; }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 8px;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .calendar-controls { display: flex; align-items: center; gap: 0.5rem; }
+        .calendar-controls select {
+            padding: 0.5rem 0.8rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+        .calendar-header button {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: var(--border-color);
+            border: 1px solid var(--border-color);
+        }
+        .cal-day-header { text-align: center; font-weight: bold; padding: 0.8rem; background: var(--bg-color); }
+        .cal-cell {
+            background: var(--white);
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            padding: 4px;
+        }
+        .cal-date { text-align: right; font-weight: bold; padding: 2px 5px; font-size: 0.95rem; }
+        .sun { color: var(--danger-color); }
+        .sat { color: #3182CE; }
+        .cal-birthday-item {
+            font-size: 0.85rem;
+            color: #111111;
+            background-color: #FDE68A;
+            border: 1px solid #F59E0B;
+            padding: 3px 6px;
+            border-radius: 4px;
+            margin-bottom: 3px;
+            font-weight: bold;
+            text-align: left;
+        }
+        .cal-memo {
+            flex-grow: 1;
+            outline: none;
+            padding: 4px;
+            font-size: 0.85rem;
+            color: #111111;
+            cursor: text;
+            white-space: pre-wrap;
+            word-break: break-all;
+            border-radius: 4px;
+        }
+        .cal-memo:focus { background-color: #FEF9C3; border: 1px dashed #CA8A04; }
+        .today-cell { background-color: #EBF8FF !important; }
+
+        @media (max-width: 768px) {
+            header { flex-direction: column; gap: 1rem; padding: 1rem; }
+            .nav-menu { flex-wrap: wrap; justify-content: center; }
+            .attendance-layout { grid-template-columns: 1fr; }
+            .cal-cell { min-height: 85px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <div class="logo" id="dojang-logo" onclick="editDojangName()" title="클릭하여 도장 이름 변경">🥋 용인대 타이거 태권도장</div>
+            <button type="button" class="btn-edit-name" onclick="editDojangName()">✏️ 이름 변경</button>
+        </div>
+        <ul class="nav-menu">
+            <li class="active" data-target="dashboard">대시보드</li>
+            <li data-target="student-management">원생 관리</li>
+            <li data-target="attendance">출결 관리</li>
+            <li data-target="tuition">회비 관리</li>
+            <li data-target="calendar">생일/일정 캘린더</li>
+            <button type="button" class="btn-kiosk-nav" onclick="openKioskMode()">🖥️ 출결 전용화면</button>
+        </ul>
+    </header>
+
+    <div id="toast-popup" class="toast-popup hidden"></div>
+
+    <!-- 원생 정보 수정 모달 팝업 -->
+    <div id="edit-modal-overlay" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>✏️ 원생 정보 수정</h3>
+                <button type="button" class="btn-modal-close" onclick="closeEditStudentModal()">✕</button>
+            </div>
+            <form id="edit-student-form">
+                <input type="hidden" id="edit-std-id">
+                <div class="input-group">
+                    <div class="input-box">
+                        <label>원생 이름 *</label>
+                        <input type="text" id="edit-std-name" required>
+                    </div>
+                    <div class="input-box">
+                        <label>생년월일 *</label>
+                        <input type="date" id="edit-std-birth" required>
+                    </div>
+                    <div class="input-box">
+                        <label>학교명</label>
+                        <input type="text" id="edit-std-school">
+                    </div>
+                    <div class="input-box">
+                        <label>부(아버지) 성함</label>
+                        <input type="text" id="edit-std-father-name">
+                    </div>
+                    <div class="input-box">
+                        <label>부 연락처</label>
+                        <input type="text" id="edit-std-father-phone">
+                    </div>
+                    <div class="input-box">
+                        <label>모(어머니) 성함</label>
+                        <input type="text" id="edit-std-mother-name">
+                    </div>
+                    <div class="input-box">
+                        <label>모 연락처</label>
+                        <input type="text" id="edit-std-mother-phone">
+                    </div>
+                    <div class="input-box">
+                        <label>대표 연락처 (비워두면 모→부 자동)</label>
+                        <input type="text" id="edit-std-phone">
+                    </div>
+                    <div class="input-box">
+                        <label>주소</label>
+                        <input type="text" id="edit-std-address">
+                    </div>
+                    <div class="input-box">
+                        <label>카톡 검색명 (비워두면 원생 이름)</label>
+                        <input type="text" id="edit-std-kakao-name">
+                    </div>
+                    <div class="input-box">
+                        <label>최초 입관일 *</label>
+                        <input type="date" id="edit-std-joindate" required>
+                    </div>
+                    <div class="input-box">
+                        <label>국기원 날짜</label>
+                        <input type="date" id="edit-std-kukkiwon">
+                    </div>
+                    <div class="input-box">
+                        <label>재원 상태</label>
+                        <select id="edit-std-status">
+                            <option value="재원">재원</option>
+                            <option value="퇴관">퇴관</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeEditStudentModal()">취소</button>
+                    <button type="submit" class="btn-save-edit">💾 수정 내용 저장하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 출결 전용 전체화면 (태블릿 / 키오스크 모드) -->
+    <div id="kiosk-overlay" class="kiosk-overlay hidden">
+        <div class="kiosk-top-bar">
+            <span id="kiosk-sync-indicator" class="kiosk-sync-pill">📡 실시간 동기화 대기중</span>
+            <button type="button" class="btn-kiosk-exit" onclick="pullSyncDataFromCloud(true)">🔄 명단 동기화 받기</button>
+            <button type="button" class="btn-kiosk-exit" onclick="requestCloseKioskMode()">🔒 관리자 화면으로 돌아가기</button>
+        </div>
+        <div class="kiosk-header">
+            <h1 id="kiosk-dojang-title">🥋 용인대 타이거 태권도장</h1>
+            <p>원생 또는 부모님 연락처 뒷자리 4자리를 누르고 [출석]을 눌러주세요!</p>
+        </div>
+        <div class="kiosk-box">
+            <div class="keypad-display" id="kiosk-keypad-display"></div>
+            <div class="keypad-grid">
+                <button type="button" class="key-btn" onclick="pressKey('1')">1</button>
+                <button type="button" class="key-btn" onclick="pressKey('2')">2</button>
+                <button type="button" class="key-btn" onclick="pressKey('3')">3</button>
+                <button type="button" class="key-btn" onclick="pressKey('4')">4</button>
+                <button type="button" class="key-btn" onclick="pressKey('5')">5</button>
+                <button type="button" class="key-btn" onclick="pressKey('6')">6</button>
+                <button type="button" class="key-btn" onclick="pressKey('7')">7</button>
+                <button type="button" class="key-btn" onclick="pressKey('8')">8</button>
+                <button type="button" class="key-btn" onclick="pressKey('9')">9</button>
+                <button type="button" class="key-btn action-btn" onclick="clearKey()">지움</button>
+                <button type="button" class="key-btn" onclick="pressKey('0')">0</button>
+                <button type="button" class="key-btn submit-btn" onclick="submitAttendance()">출석</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 키오스크 관리자 잠금 해제용 4자리 비밀번호(PIN) 모달 -->
+    <div id="kiosk-pin-modal" class="pin-modal-overlay hidden">
+        <div class="pin-modal-card">
+            <h3>🔒 관리자 잠금 해제</h3>
+            <p>관리자 화면으로 이동하려면 4자리 비밀번호를 입력하세요.</p>
+            <div id="pin-dots-display" class="pin-dots-display"></div>
+            <div class="pin-keypad-grid">
+                <button type="button" class="pin-key-btn" onclick="pressPinKey('1')">1</button>
+                <button type="button" class="pin-key-btn" onclick="pressPinKey('2')">2</button>
+                <button type="button" class="pin-key-btn" onclick="pressPinKey('3')">3</button>
+                <button type="button" class="pin-key-btn" onclick="pressPinKey('4')">4</button>
+                <button type="button" class="pin-key-btn" onclick="pressPinKey('5')">5</button>
+                <button type="button" class="pin-key-btn" onclick="pressPinKey('6')">6</button>
+                <button type="button" class="pin-key-btn" onclick="pressPinKey('7')">7</button>
+                <button type="button" class="pin-key-btn" onclick="pressPinKey('8')">8</button>
+                <button type="button" class="pin-key-btn" onclick="pressPinKey('9')">9</button>
+                <button type="button" class="pin-key-btn pin-clear" onclick="clearPinInput()">지움</button>
+                <button type="button" class="pin-key-btn" onclick="pressPinKey('0')">0</button>
+                <button type="button" class="pin-key-btn pin-cancel" onclick="closePinModal()">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <main>
+        <!-- 1. 대시보드 -->
+        <section id="dashboard" class="section-container">
+            <h2 class="section-title">📊 도장 현황 대시보드</h2>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h4>재원 중인 원생</h4>
+                    <div class="num" id="dash-total-students">0명</div>
+                </div>
+                <div class="summary-card">
+                    <h4>오늘 출석 인원</h4>
+                    <div class="num" id="dash-today-attendance">0명</div>
+                </div>
+                <div class="summary-card">
+                    <h4>이번 달 미납 (재원생)</h4>
+                    <div class="num" id="dash-unpaid-count">0명</div>
+                </div>
+                <div class="summary-card">
+                    <h4>이번 달 생일자</h4>
+                    <div class="num" id="dash-month-birthdays">0명</div>
+                </div>
+            </div>
+
+            <div class="backup-card">
+                <div class="backup-info">
+                    <h3>🛡️ 도장 전체 데이터 안전 백업 및 복원</h3>
+                    <p>원생 명부, 출결 기록, 회비 수납 내역, 달력 메모, 도장 설정을 파일(.json)로 컴퓨터에 저장하거나 태블릿/다른 PC로 그대로 복원할 수 있습니다.</p>
+                </div>
+                <div class="backup-btn-group">
+                    <button type="button" class="btn-backup-save" onclick="exportAllDataBackup()">💾 전체 데이터 백업 파일 저장</button>
+                    <input type="file" id="backup-file-input" accept=".json" class="hidden" onchange="importAllDataBackup(event)">
+                    <button type="button" class="btn-backup-load" onclick="document.getElementById('backup-file-input').click()">📂 백업 파일 불러오기 (복원)</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 원생 관리 -->
+        <section id="student-management" class="section-container hidden">
+            <div class="section-title">
+                <span>👥 원생 관리 (명부)</span>
+                <button type="button" class="btn-excel-export" onclick="exportStudentListExcel()">📥 원생 명단 엑셀(.xlsx) 다운로드</button>
+            </div>
+
+            <div class="upload-banner">
+                <div class="upload-banner-info">
+                    <h4>📂 관원생 명단 일괄 업로드 (한글 HWP 표 붙여넣기 / 엑셀 / CSV)</h4>
+                    <p>이름, 생년월일, 부/모 성함·연락처, 대표연락처(모→부 우선), 카톡검색명(원생이름), 주소, 입관일(2개일 때 두 번째 날짜)이 맞춤 반영됩니다.</p>
+                </div>
+                <div class="upload-btn-group">
+                    <button type="button" class="btn-hwp-paste" onclick="toggleHwpPasteBox()">📋 한글(HWP) 표 붙여넣기</button>
+                    <input type="file" id="student-file-input" accept=".xlsx,.xls,.csv,.txt,.html" class="hidden" onchange="handleStudentFileUpload(event)">
+                    <button type="button" class="btn-upload" onclick="document.getElementById('student-file-input').click()">📤 엑셀/CSV 파일 업로드</button>
+                    <button type="button" class="btn-sample" onclick="downloadStudentSampleCSV()">📥 샘플 양식 다운로드</button>
+                </div>
+            </div>
+
+            <div id="hwp-paste-box" class="hwp-paste-box hidden">
+                <h4 style="color:#065F46;">📋 한글(HWP) 문서 표 복사·붙여넣기 등록</h4>
+                <p style="font-size:0.85rem; color:#047857;">
+                    한글(HWP) 파일에서 표 전체를 드래그하여 <strong>복사(Ctrl+C)</strong>한 뒤, 아래 하얀 칸을 클릭하고 <strong>붙여넣기(Ctrl+V)</strong> 해주세요.
+                </p>
+                <div id="hwp-paste-editor" class="hwp-paste-editor" contenteditable="true" data-placeholder="여기를 클릭하고 한글(HWP)에서 복사한 표를 붙여넣기(Ctrl+V) 하세요..."></div>
+                <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                    <button type="button" class="btn-sample" onclick="clearHwpPasteBox()">비우기</button>
+                    <button type="button" class="btn-sample" onclick="toggleHwpPasteBox()">닫기</button>
+                    <button type="button" class="btn-hwp-paste" onclick="processHwpPasteData()">✅ 붙여넣은 명단 일괄 등록하기</button>
+                </div>
+            </div>
+
+            <div class="form-container">
+                <h3>📝 신규 원생 개별 등록</h3>
+                <form id="student-form">
+                    <div class="input-group">
+                        <div class="input-box">
+                            <label>원생 이름 *</label>
+                            <input type="text" id="std-name" placeholder="예: 홍길동" required>
+                        </div>
+                        <div class="input-box">
+                            <label>생년월일 *</label>
+                            <input type="date" id="std-birth" required>
+                        </div>
+                        <div class="input-box">
+                            <label>학교명 (선택)</label>
+                            <input type="text" id="std-school" placeholder="예: 타이거초">
+                        </div>
+                        <div class="input-box">
+                            <label>부(아버지) 성함 (선택)</label>
+                            <input type="text" id="std-father-name" placeholder="예: 홍판서">
+                        </div>
+                        <div class="input-box">
+                            <label>부 연락처 (선택)</label>
+                            <input type="text" id="std-father-phone" placeholder="예: 010-1111-2222">
+                        </div>
+                        <div class="input-box">
+                            <label>모(어머니) 성함 (선택)</label>
+                            <input type="text" id="std-mother-name" placeholder="예: 김부인">
+                        </div>
+                        <div class="input-box">
+                            <label>모 연락처 (선택)</label>
+                            <input type="text" id="std-mother-phone" placeholder="예: 010-3333-4444">
+                        </div>
+                        <div class="input-box">
+                            <label>대표 연락처 (비워두면 모→부 자동)</label>
+                            <input type="text" id="std-phone" placeholder="자동 반영됨">
+                        </div>
+                        <div class="input-box">
+                            <label>주소 (선택)</label>
+                            <input type="text" id="std-address" placeholder="예: 천안시 서북구...">
+                        </div>
+                        <div class="input-box">
+                            <label>카톡 검색명 (비워두면 원생 이름)</label>
+                            <input type="text" id="std-kakao-name" placeholder="자동: 원생 이름">
+                        </div>
+                        <div class="input-box">
+                            <label>최초 입관일 *</label>
+                            <input type="date" id="std-joindate" required>
+                        </div>
+                        <div class="input-box">
+                            <label>국기원 날짜 (선택)</label>
+                            <input type="date" id="std-kukkiwon">
+                        </div>
+                        <div class="input-box">
+                            <label>재원 상태</label>
+                            <select id="std-status">
+                                <option value="재원">재원</option>
+                                <option value="퇴관">퇴관</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit">원생 등록하기</button>
+                </form>
+            </div>
+
+            <div class="table-toolbar">
+                <div class="filter-container">
+                    <button type="button" class="btn-filter active" id="std-filter-active" onclick="setStudentStatusFilter('재원')">재원생 보기 (<span id="count-active">0</span>)</button>
+                    <button type="button" class="btn-filter" id="std-filter-withdrawn" onclick="setStudentStatusFilter('퇴관')">퇴관생 보관함 (<span id="count-withdrawn">0</span>)</button>
+                    <button type="button" class="btn-filter" id="std-filter-all" onclick="setStudentStatusFilter('전체')">전체 보기 (<span id="count-all">0</span>)</button>
+                </div>
+
+                <div class="search-box-wrap">
+                    <input type="text" id="student-search-input" class="search-input" placeholder="🔍 원생 이름, 부모님 성함, 학교, 연락처 검색..." oninput="onStudentSearchInput()">
+                </div>
+
+                <div class="bulk-action-group">
+                    <button type="button" class="btn-bulk-delete" id="btn-delete-selected" onclick="deleteSelectedStudents()">🗑️ 선택 삭제 (0명)</button>
+                    <button type="button" class="btn-all-delete" onclick="deleteAllStudents()">🔥 전체 삭제</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="select-all-students" class="row-checkbox" onchange="toggleSelectAllStudents(this)" title="현재 페이지 전체 선택/해제"></th>
+                            <th>상태</th>
+                            <th>이름[학년]</th>
+                            <th>생년월일(나이)</th>
+                            <th>학교</th>
+                            <th>부 성함/연락처</th>
+                            <th>모 성함/연락처</th>
+                            <th>대표연락처</th>
+                            <th>주소</th>
+                            <th>카톡검색명</th>
+                            <th>최초입관일</th>
+                            <th>국기원날짜</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-list"></tbody>
+                </table>
+            </div>
+
+            <div id="student-pagination" class="pagination-wrap"></div>
+        </section>
+
+        <!-- 3. 스마트 출결, 태블릿 실시간 동기화, 키오스크 비밀번호 설정, 한달 개근 명단 출력 -->
+        <section id="attendance" class="section-container hidden">
+            <div class="section-title">
+                <span>⏱ 스마트 출결 및 태블릿 실시간 동기화 관리</span>
+                <button type="button" class="btn-kiosk-nav" style="font-size:1rem; padding:0.7rem 1.3rem;" onclick="openKioskMode()">🖥️ 출결 전용 전체화면(태블릿/키오스크) 켜기</button>
+            </div>
+            
+            <div class="attendance-layout">
+                <div>
+                    <div class="keypad-container">
+                        <div class="keypad-display" id="keypad-display"></div>
+                        <div class="keypad-grid">
+                            <button type="button" class="key-btn" onclick="pressKey('1')">1</button>
+                            <button type="button" class="key-btn" onclick="pressKey('2')">2</button>
+                            <button type="button" class="key-btn" onclick="pressKey('3')">3</button>
+                            <button type="button" class="key-btn" onclick="pressKey('4')">4</button>
+                            <button type="button" class="key-btn" onclick="pressKey('5')">5</button>
+                            <button type="button" class="key-btn" onclick="pressKey('6')">6</button>
+                            <button type="button" class="key-btn" onclick="pressKey('7')">7</button>
+                            <button type="button" class="key-btn" onclick="pressKey('8')">8</button>
+                            <button type="button" class="key-btn" onclick="pressKey('9')">9</button>
+                            <button type="button" class="key-btn action-btn" onclick="clearKey()">지움</button>
+                            <button type="button" class="key-btn" onclick="pressKey('0')">0</button>
+                            <button type="button" class="key-btn submit-btn" onclick="submitAttendance()">출석</button>
+                        </div>
+                    </div>
+                    <div style="text-align: center; color: #666; margin-top: 0.8rem;">
+                        어머니, 아버지, 대표 연락처 뒷자리 4자리를 누르면 출석됩니다.
+                    </div>
+                </div>
+
+                <div>
+                    <!-- PC 카카오톡 자동 봇 & 키오스크 잠금 비밀번호 설정 -->
+                    <div class="alimtalk-box">
+                        <h3>💬 PC 카카오톡 자동 봇 & 키오스크 잠금 설정</h3>
+                        <div class="bot-status-badge">🟢 start_autobot.bat 엔진 자동 연동 활성화됨 (Port 5005)</div>
+                        <div class="alimtalk-option">
+                            <label style="font-weight:bold; font-size:0.85rem;">카톡 전송 문구 ({도장명}, {이름}, {시간} 자동 변환 · [학년] 제외됨)</label>
+                            <input type="text" id="alim-template" oninput="saveAlimTemplate()" value="[{도장명}] {이름} 수련생이 {시간}에 안전하게 출석했습니다. 🥋">
+                        </div>
+                        <div class="alimtalk-option" style="margin-bottom:0;">
+                            <label style="font-weight:bold; font-size:0.85rem;">🔒 출결 전용화면(키오스크) 종료 비밀번호 (숫자 4자리)</label>
+                            <div style="display:flex; gap:0.5rem; margin-top:0.25rem;">
+                                <input type="password" id="kiosk-pin-setting" maxlength="4" placeholder="기본값: 0000" style="margin-top:0; max-width:160px; text-align:center; letter-spacing:4px; font-weight:bold;">
+                                <button type="button" class="btn-sync-connect" style="background:var(--primary-color);" onclick="saveKioskPinSetting()">비밀번호 변경 저장</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PC ↔ 태블릿 실시간 동기화 설정 박스 -->
+                    <div class="sync-box">
+                        <h3>📡 PC ↔ 태블릿 실시간 출결 동기화</h3>
+                        <p style="font-size:0.83rem; color:#0369A1;">
+                            도장 PC와 태블릿에 <strong>동일한 동기화 아이디</strong>를 입력하고 연결하면, 태블릿에서 출석 번호를 누를 때 도장 PC로 실시간 기록되며 PC 카카오톡이 즉시 발송됩니다.
+                        </p>
+                        <div class="sync-row">
+                            <input type="text" id="sync-id-input" placeholder="동기화 아이디 입력 (예: tiger_tkd_777)">
+                            <button type="button" class="btn-sync-connect" onclick="saveAndConnectSyncId()">🔗 동기화 연결</button>
+                        </div>
+                        <div class="sync-row" style="margin-top:0.6rem;">
+                            <button type="button" class="btn-sync-push" onclick="pushStudentsToCloud()">📲 PC → 태블릿으로 원생 명단 실시간 전송</button>
+                            <button type="button" class="btn-sample" onclick="pullSyncDataFromCloud(true)">🔄 태블릿에서 최신 명단 받기</button>
+                        </div>
+                        <div id="sync-status-text" style="margin-top:0.6rem; font-size:0.82rem; font-weight:bold; color:#047857;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+            <h3 style="color:var(--primary-color); margin-bottom:0.8rem;">📋 오늘 출석 명단</h3>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>이름[학년]</th><th>카톡 검색명</th><th>대표 연락처</th><th>출석 시간</th><th>카톡 발송 / 동기화 상태</th></tr></thead>
+                    <tbody id="attendance-list"></tbody>
+                </table>
+            </div>
+
+            <!-- 한달 개근 재원생 명단 일괄 조회 및 엑셀 출력 -->
+            <div class="perfect-attendance-box">
+                <div class="perfect-header">
+                    <div>
+                        <h3 style="color:var(--primary-color); font-size:1.2rem;">🏆 월별 한달 개근 재원생 명단 조회 및 엑셀 출력</h3>
+                        <p style="font-size:0.85rem; color:#555;">선택한 달의 개근 기준 일수 이상 출석한 재원생 명단을 자동으로 추출하여 엑셀로 일괄 다운로드합니다.</p>
+                    </div>
+                    <div class="perfect-controls">
+                        <label style="font-size:0.85rem; font-weight:bold;">조회 월:</label>
+                        <input type="month" id="perfect-month-input" onchange="onPerfectMonthChange()">
+                        <label style="font-size:0.85rem; font-weight:bold;">개근 기준 일수:</label>
+                        <input type="number" id="perfect-target-days" min="1" max="31" value="20" style="width:75px;" oninput="renderPerfectAttendanceList()">
+                        <button type="button" class="btn-sample" onclick="autoSetPerfectTargetDays()" title="해당 월에 도장 출석 기록이 있는 수업일수로 자동 맞춤">⚡ 수업일수 자동맞춤</button>
+                        <button type="button" class="btn-excel-export" onclick="exportPerfectAttendanceExcel()">📥 한달 개근 재원생 엑셀 다운로드</button>
+                    </div>
+                </div>
+                <div id="perfect-summary-info" style="font-size:0.9rem; font-weight:bold; color:var(--primary-color); margin-bottom:0.8rem;"></div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>순번</th>
+                                <th>이름[학년]</th>
+                                <th>학교</th>
+                                <th>대표 연락처</th>
+                                <th>이번 달 출석 일수</th>
+                                <th>개근 달성 상태</th>
+                            </tr>
+                        </thead>
+                        <tbody id="perfect-attendance-list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 회비 수납 -->
+        <section id="tuition" class="section-container hidden">
+            <div class="section-title">
+                <span>💰 회비 수납 관리</span>
+                <button type="button" class="btn-excel-export" onclick="exportTuitionListExcel()">📥 회비 수납 내역 엑셀(.xlsx) 다운로드</button>
+            </div>
+
+            <div class="upload-banner">
+                <div class="upload-banner-info">
+                    <h4>🏦 은행 입출금 & 지역상품권(chak) 내역 자동 동기화</h4>
+                    <p><strong>원생 이름, 부/모 성함</strong> 일치 내역은 물론, 지역상품권 chak 앱의 <strong>O*O (예: 홍*동) 마스킹 성함</strong>까지 자동 분석하여 <strong>[완납]</strong> 처리합니다.</p>
+                </div>
+                <div class="upload-btn-group">
+                    <input type="file" id="bank-file-input" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleBankFileUpload(event)">
+                    <button type="button" class="btn-upload" onclick="document.getElementById('bank-file-input').click()">💳 입출금 / chak 내역 파일 업로드</button>
+                </div>
+            </div>
+
+            <div class="table-toolbar">
+                <div class="filter-container">
+                    <button type="button" class="btn-filter active" id="filter-all" onclick="setTuitionFilter('all')">재원생 전체 보기</button>
+                    <button type="button" class="btn-filter" id="filter-unpaid" onclick="setTuitionFilter('unpaid')">미납자만 보기</button>
+                </div>
+                <div>
+                    <button type="button" class="btn-reset-tuition" onclick="resetAllTuitionUnpaid()">🔄 새 달 회비 전체 '미납' 일괄 초기화</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>이름[학년]</th><th>부 성함</th><th>모 성함</th><th>대표 연락처</th><th>최초 입관일</th><th>납부 상태</th><th>입금/chak 매칭 내역</th><th>수동 확인</th></tr></thead>
+                    <tbody id="tuition-list"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 5. 캘린더 -->
+        <section id="calendar" class="section-container hidden">
+            <h2 class="section-title">📅 생일자 및 도장 일정 캘린더 (2000년 ~ 2099년)</h2>
+            <div class="calendar-header">
+                <button type="button" onclick="changeMonth(-1)">◀ 이전달</button>
+                <div class="calendar-controls">
+                    <select id="cal-year-select" onchange="jumpToYearMonth()"></select>
+                    <select id="cal-month-select" onchange="jumpToYearMonth()"></select>
+                    <button type="button" onclick="goToToday()">오늘</button>
+                </div>
+                <button type="button" onclick="changeMonth(1)">다음달 ▶</button>
+            </div>
+            <div class="calendar-grid">
+                <div class="cal-day-header sun">일</div>
+                <div class="cal-day-header">월</div>
+                <div class="cal-day-header">화</div>
+                <div class="cal-day-header">수</div>
+                <div class="cal-day-header">목</div>
+                <div class="cal-day-header">금</div>
+                <div class="cal-day-header sat">토</div>
+            </div>
+            <div class="calendar-grid" id="calendar-days"></div>
+        </section>
+    </main>
+
+    <script>
+        /* =========================================================
+           1. 표 제목/항목명 필터 사전 (관원생 이름으로 오인식 방지)
+        ========================================================= */
+        const FORBIDDEN_LABEL_NAMES = new Set([
+            '관원생이름', '관원생성명', '관원생', '원생이름', '원생성명', '원생', '수련생이름', '수련생', '학생이름', '학생',
+            '이름', '성명', '성함', '부모님성함', '부모님', '보호자성함', '보호자', '학부모성함', '학부모',
+            '부', '모', '부성함', '모성함', '부이름', '모이름', '아버지', '어머니', '아빠', '엄마', '부모',
+            '전화번호', '연락처', '휴대폰', '핸드폰', '집전화', '비상연락처', '부연락처', '모연락처', '대표연락처',
+            '주소', '집주소', '거주지', '현주소', '자택주소', '주소주민번호',
+            '주민번호', '주민등록번호', '주민', '생년월일', '생일', '출생년도', '출생연도', '출생일', '나이', '연령',
+            '입관일', '입관일자', '입관날짜', '수련시작일', '수련시작날짜', '최초입관일', '입관일수련시작일', '등록일', '등록일자', '입학일',
+            '학교', '학교명', '학년', '유치원', '어린이집', '학교학년',
+            '띠', '태권도띠', '현재띠', '급수', '품단', '단품', '국기원', '국기원날짜', '심사일', '심사날짜',
+            '상태', '재원', '퇴관', '휴관', '구분', '비고', '특이사항', '번호', '연번', '순번', 'no', '카톡검색명'
+        ]);
+
+        function cleanLabelKey(rawVal) {
+            return String(rawVal || '').replace(/[\s:：()\[\]\-_/·.,*]/g, '').toLowerCase();
+        }
+
+        function isHeaderOrLabelName(rawVal) {
+            if (!rawVal) return true;
+            const cleaned = cleanLabelKey(rawVal);
+            if (!cleaned) return true;
+            if (FORBIDDEN_LABEL_NAMES.has(cleaned)) return true;
+
+            const labelSubstrings = [
+                '관원생', '원생이름', '부모님', '보호자', '전화번호', '연락처', '주민번호', '주민등록',
+                '생년월일', '입관일', '수련시작', '최초입관', '국기원', '카톡검색', '특이사항', '학교명'
+            ];
+            for (const sub of labelSubstrings) {
+                if (cleaned.includes(sub)) return true;
+            }
+            if (cleaned.length <= 1) return true;
+            if (/^[0-9]+$/.test(cleaned)) return true;
+            return false;
+        }
+
+        /* =========================================================
+           2. 데이터 초기화 및 변수 설정
+        ========================================================= */
+        let students = [];
+        let attendanceRecords = [];
+        let calendarData = {};
+        let dojangName = localStorage.getItem('taekwondo_dojang_name') || '용인대 타이거 태권도장';
+        let alimTemplate = localStorage.getItem('taekwondo_alim_template') || '[{도장명}] {이름} 수련생이 {시간}에 안전하게 출석했습니다. 🥋';
+        let syncUserId = localStorage.getItem('taekwondo_sync_userid') || 'tiger_tkd_sync';
+        let kioskPin = localStorage.getItem('taekwondo_kiosk_pin') || '0000';
+
+        try { students = JSON.parse(localStorage.getItem('taekwondo_students')) || []; } catch(e) { students = []; }
+        try { attendanceRecords = JSON.parse(localStorage.getItem('taekwondo_attendances')) || []; } catch(e) { attendanceRecords = []; }
+        try { calendarData = JSON.parse(localStorage.getItem('taekwondo_calendar')) || {}; } catch(e) { calendarData = {}; }
+
+        students = students.filter(s => s && !isHeaderOrLabelName(s.name));
+        students.forEach(s => {
+            if (!s.status) s.status = '재원';
+            if (!s.joinDate) s.joinDate = '';
+            if (!s.paidMemo) s.paidMemo = '';
+            if (!s.fatherName) s.fatherName = '';
+            if (!s.fatherPhone) s.fatherPhone = '';
+            if (!s.motherName) s.motherName = '';
+            if (!s.motherPhone) s.motherPhone = '';
+            if (!s.address) s.address = '';
+            s.phone = s.motherPhone || s.fatherPhone || s.phone || '';
+            if (!s.kakaoName) s.kakaoName = s.name;
+        });
+
+        function ensureIsoDateOnRecord(rec) {
+            if (rec.isoDate && /^\d{4}-\d{2}-\d{2}$/.test(rec.isoDate)) return rec.isoDate;
+            if (rec.date) {
+                const nums = String(rec.date).match(/\d+/g);
+                if (nums && nums.length >= 3) {
+                    let y = nums[0], m = nums[1], d = nums[2];
+                    if (y.length !== 4 && nums[2].length === 4) {
+                        y = nums[2]; m = nums[0]; d = nums[1];
+                    }
+                    rec.isoDate = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    return rec.isoDate;
+                }
+            }
+            if (rec.id && typeof rec.id === 'number' && rec.id > 1000000000000) {
+                const dt = new Date(rec.id);
+                rec.isoDate = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+                return rec.isoDate;
+            }
+            return '';
+        }
+        attendanceRecords.forEach(ensureIsoDateOnRecord);
+
+        localStorage.setItem('taekwondo_students', JSON.stringify(students));
+        localStorage.setItem('taekwondo_attendances', JSON.stringify(attendanceRecords));
+
+        let currentInput = "";
+        let currentPinInput = "";
+        let currentStudentStatusFilter = "재원";
+        let currentStudentPage = 1;
+        const STUDENTS_PER_PAGE = 20;
+        let selectedStudentIds = new Set();
+
+        let currentTuitionFilter = "all";
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth();
+
+        const dojangLogoEl = document.getElementById('dojang-logo');
+        const kioskDojangTitleEl = document.getElementById('kiosk-dojang-title');
+        const studentForm = document.getElementById('student-form');
+        const editStudentForm = document.getElementById('edit-student-form');
+        const studentList = document.getElementById('student-list');
+        const paginationEl = document.getElementById('student-pagination');
+        const displayEl = document.getElementById('keypad-display');
+        const kioskDisplayEl = document.getElementById('kiosk-keypad-display');
+        const attendanceList = document.getElementById('attendance-list');
+        const tuitionList = document.getElementById('tuition-list');
+        const yearSelect = document.getElementById('cal-year-select');
+        const monthSelect = document.getElementById('cal-month-select');
+        const alimTemplateInput = document.getElementById('alim-template');
+        const joinDateInput = document.getElementById('std-joindate');
+        const syncIdInput = document.getElementById('sync-id-input');
+        const perfectMonthInput = document.getElementById('perfect-month-input');
+        const kioskPinSettingInput = document.getElementById('kiosk-pin-setting');
+
+        const nowInit = new Date();
+        const todayIsoStr = `${nowInit.getFullYear()}-${String(nowInit.getMonth()+1).padStart(2,'0')}-${String(nowInit.getDate()).padStart(2,'0')}`;
+        const currentMonthIsoStr = `${nowInit.getFullYear()}-${String(nowInit.getMonth()+1).padStart(2,'0')}`;
+
+        alimTemplateInput.value = alimTemplate;
+        joinDateInput.value = todayIsoStr;
+        syncIdInput.value = syncUserId;
+        perfectMonthInput.value = currentMonthIsoStr;
+        kioskPinSettingInput.value = kioskPin;
+
+        window.saveAlimTemplate = function() {
+            alimTemplate = alimTemplateInput.value;
+            localStorage.setItem('taekwondo_alim_template', alimTemplate);
+        };
+
+        window.saveKioskPinSetting = function() {
+            const val = kioskPinSettingInput.value.trim();
+            if (!/^\d{4}$/.test(val)) {
+                alert("키오스크 잠금 비밀번호는 숫자 4자리로 입력해 주세요. (예: 0000, 1234)");
+                return;
+            }
+            kioskPin = val;
+            localStorage.setItem('taekwondo_kiosk_pin', kioskPin);
+            alert(`🔒 출결 전용화면(키오스크) 잠금 해제 비밀번호가 [${kioskPin}]으로 저장되었습니다.`);
+        };
+
+        function renderDojangName() {
+            dojangLogoEl.textContent = `🥋 ${dojangName}`;
+            kioskDojangTitleEl.textContent = `🥋 ${dojangName}`;
+            document.title = `${dojangName} - 올인원 관리 시스템`;
+        }
+
+        window.editDojangName = function() {
+            const newName = prompt("변경할 태권도장 이름을 입력해 주세요:", dojangName);
+            if (newName !== null && newName.trim() !== "") {
+                dojangName = newName.trim();
+                localStorage.setItem('taekwondo_dojang_name', dojangName);
+                renderDojangName();
+            }
+        };
+
+        /* =========================================================
+           3. PC ↔ 태블릿 실시간 동기화 엔진 (start_autobot.bat 호환)
+        ========================================================= */
+        let syncEventSource = null;
+        let processedSyncReqIds = new Set();
+        let incomingStudentChunks = {};
+
+        function getSyncTopic(uid) {
+            const clean = String(uid || '').replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
+            return clean ? `ontkd_sync_${clean}` : '';
+        }
+
+        function updateSyncStatusUI(msg) {
+            const el = document.getElementById('sync-status-text');
+            const pill = document.getElementById('kiosk-sync-indicator');
+            if (el) el.textContent = msg;
+            if (pill) pill.textContent = msg;
+        }
+
+        window.saveAndConnectSyncId = function() {
+            const rawUid = syncIdInput.value.trim();
+            if (!rawUid) {
+                alert("동기화 아이디를 입력해 주세요. (예: tiger_tkd_777)");
+                return;
+            }
+            syncUserId = rawUid;
+            localStorage.setItem('taekwondo_sync_userid', syncUserId);
+            const topic = getSyncTopic(syncUserId);
+
+            try {
+                const botSyncImg = new Image();
+                botSyncImg.src = `http://127.0.0.1:5005/send.gif?syncid=${encodeURIComponent(topic)}&uid=${encodeURIComponent(syncUserId)}&t=${Date.now()}`;
+            } catch(e) {}
+
+            if (syncEventSource) {
+                try { syncEventSource.close(); } catch(e) {}
+            }
+            try {
+                syncEventSource = new EventSource(`https://ntfy.sh/${topic}/sse`);
+                syncEventSource.onopen = function() {
+                    updateSyncStatusUI(`🟢 실시간 동기화 연결됨 (ID: ${syncUserId})`);
+                };
+                syncEventSource.onmessage = function(event) {
+                    handleIncomingSyncPacket(event.data);
+                };
+                syncEventSource.onerror = function() {
+                    updateSyncStatusUI(`🟡 동기화 재연결 대기중 (ID: ${syncUserId})`);
+                };
+            } catch(e) {}
+
+            pullSyncDataFromCloud(false);
+        };
+
+        function handleIncomingSyncPacket(rawJsonLine) {
+            if (!rawJsonLine) return;
+            try {
+                const outer = JSON.parse(rawJsonLine);
+                if (!outer || !outer.message) return;
+                const inner = JSON.parse(outer.message);
+                if (!inner || !inner.cmd) return;
+
+                if (inner.reqId && processedSyncReqIds.has(inner.reqId)) return;
+                if (inner.reqId) processedSyncReqIds.add(inner.reqId);
+
+                if (inner.cmd === 'KAKAO_SEND' && inner.attRecord) {
+                    const rec = inner.attRecord;
+                    const exists = attendanceRecords.some(r => r.id === rec.id);
+                    if (!exists) {
+                        attendanceRecords.push(rec);
+                        localStorage.setItem('taekwondo_attendances', JSON.stringify(attendanceRecords));
+                        renderAttendanceRecords();
+                        renderPerfectAttendanceList();
+                        updateDashboard();
+                        showToast(`📲 <strong>[태블릿 출석 동기화] ${rec.name}</strong><br><span style="font-size:0.85rem;">출석 기록 및 PC 카톡 발송이 동기화되었습니다!</span>`);
+                    }
+                }
+                else if (inner.cmd === 'STUDENT_SYNC_CHUNK') {
+                    const batchId = inner.batchId;
+                    if (!incomingStudentChunks[batchId]) {
+                        incomingStudentChunks[batchId] = {
+                            totalChunks: inner.totalChunks,
+                            received: {},
+                            dojangName: inner.dojangName
+                        };
+                    }
+                    incomingStudentChunks[batchId].received[inner.chunkIndex] = inner.students || [];
+
+                    const batch = incomingStudentChunks[batchId];
+                    if (Object.keys(batch.received).length === batch.totalChunks) {
+                        let merged = [];
+                        for (let i = 0; i < batch.totalChunks; i++) {
+                            merged = merged.concat(batch.received[i] || []);
+                        }
+                        students = merged;
+                        if (batch.dojangName) {
+                            dojangName = batch.dojangName;
+                            localStorage.setItem('taekwondo_dojang_name', dojangName);
+                            renderDojangName();
+                        }
+                        localStorage.setItem('taekwondo_students', JSON.stringify(students));
+                        renderStudents();
+                        showToast(`📲 <strong>원생 명단 실시간 동기화 완료!</strong><br><span style="font-size:0.85rem;">총 ${students.length}명의 원생 데이터가 반영되었습니다.</span>`);
+                        delete incomingStudentChunks[batchId];
+                    }
+                }
+            } catch(e) {}
+        }
+
+        window.pushStudentsToCloud = async function() {
+            const topic = getSyncTopic(syncUserId);
+            if (!topic) {
+                alert("먼저 동기화 아이디를 입력하고 [🔗 동기화 연결]을 눌러주세요.");
+                return;
+            }
+            const chunkSize = 15;
+            const totalChunks = Math.max(1, Math.ceil(students.length / chunkSize));
+            const batchId = "BATCH_" + Date.now();
+
+            try {
+                for (let i = 0; i < totalChunks; i++) {
+                    const slice = students.slice(i * chunkSize, (i + 1) * chunkSize);
+                    const payload = {
+                        cmd: "STUDENT_SYNC_CHUNK",
+                        reqId: `${batchId}_${i}`,
+                        batchId: batchId,
+                        chunkIndex: i,
+                        totalChunks: totalChunks,
+                        dojangName: dojangName,
+                        students: slice
+                    };
+                    await fetch(`https://ntfy.sh/${topic}`, {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                }
+                alert(`📲 태블릿 동기화 채널(ID: ${syncUserId})로 총 ${students.length}명의 원생 명단을 전송했습니다!\n태블릿 화면에 즉시 반영됩니다.`);
+            } catch (err) {
+                alert("동기화 전송 중 네트워크 오류가 발생했습니다. 인터넷 연결을 확인해 주세요.");
+            }
+        };
+
+        window.pullSyncDataFromCloud = async function(showAlert) {
+            const topic = getSyncTopic(syncUserId);
+            if (!topic) return;
+            try {
+                const res = await fetch(`https://ntfy.sh/${topic}/json?poll=1&since=24h&nocache=${Date.now()}`);
+                const text = await res.text();
+                const lines = text.split(/\r?\n/).filter(Boolean);
+                lines.forEach(line => handleIncomingSyncPacket(line));
+                if (showAlert) {
+                    alert(`🔄 동기화 채널(${syncUserId})에서 최신 데이터를 확인했습니다. (현재 원생: ${students.length}명)`);
+                }
+            } catch(e) {
+                if (showAlert) alert("동기화 서버에 연결할 수 없습니다.");
+            }
+        };
+
+        /* =========================================================
+           4. 전체 데이터 백업 파일(.json) 및 엑셀(.xlsx) 다운로드 기능
+        ========================================================= */
+        window.exportAllDataBackup = function() {
+            const backupPayload = {
+                version: "1.0",
+                exportedAt: new Date().toISOString(),
+                dojangName: dojangName,
+                alimTemplate: alimTemplate,
+                syncUserId: syncUserId,
+                kioskPin: kioskPin,
+                students: students,
+                attendanceRecords: attendanceRecords,
+                calendarData: calendarData
+            };
+            const jsonStr = JSON.stringify(backupPayload, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${dojangName}_전체백업_${todayIsoStr}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        window.importAllDataBackup = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (!parsed || !Array.isArray(parsed.students)) {
+                        alert("올바른 백업 파일(.json) 형식이 아닙니다.");
+                        event.target.value = '';
+                        return;
+                    }
+                    if (!confirm(`백업 파일 데이터를 불러오시겠습니까?\n(원생 ${parsed.students.length}명 및 일정·출결 데이터가 복원됩니다.)`)) {
+                        event.target.value = '';
+                        return;
+                    }
+
+                    students = parsed.students || [];
+                    attendanceRecords = Array.isArray(parsed.attendanceRecords) ? parsed.attendanceRecords : [];
+                    attendanceRecords.forEach(ensureIsoDateOnRecord);
+                    calendarData = (parsed.calendarData && typeof parsed.calendarData === 'object') ? parsed.calendarData : {};
+                    if (parsed.dojangName) {
+                        dojangName = parsed.dojangName;
+                        localStorage.setItem('taekwondo_dojang_name', dojangName);
+                    }
+                    if (parsed.alimTemplate) {
+                        alimTemplate = parsed.alimTemplate;
+                        alimTemplateInput.value = alimTemplate;
+                        localStorage.setItem('taekwondo_alim_template', alimTemplate);
+                    }
+                    if (parsed.kioskPin && /^\d{4}$/.test(parsed.kioskPin)) {
+                        kioskPin = parsed.kioskPin;
+                        kioskPinSettingInput.value = kioskPin;
+                        localStorage.setItem('taekwondo_kiosk_pin', kioskPin);
+                    }
+
+                    localStorage.setItem('taekwondo_students', JSON.stringify(students));
+                    localStorage.setItem('taekwondo_attendances', JSON.stringify(attendanceRecords));
+                    localStorage.setItem('taekwondo_calendar', JSON.stringify(calendarData));
+
+                    selectedStudentIds.clear();
+                    currentStudentPage = 1;
+                    renderDojangName();
+                    renderStudents();
+                    renderAttendanceRecords();
+                    renderPerfectAttendanceList();
+                    renderTuitionList();
+                    renderCalendar();
+                    updateDashboard();
+                    event.target.value = '';
+                    alert("🎉 전체 데이터 복원이 완료되었습니다!");
+                } catch (err) {
+                    alert("백업 파일을 읽는 중 오류가 발생했습니다.");
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file, "UTF-8");
+        };
+
+        window.exportStudentListExcel = function() {
+            if (students.length === 0) {
+                alert("다운로드할 원생 데이터가 없습니다.");
+                return;
+            }
+            const thisYear = new Date().getFullYear();
+            let targetList = students;
+            if (currentStudentStatusFilter === '재원') targetList = students.filter(s => s.status !== '퇴관');
+            else if (currentStudentStatusFilter === '퇴관') targetList = students.filter(s => s.status === '퇴관');
+
+            const excelRows = targetList.map((s, idx) => {
+                const info = getAgeAndGrade(s.birth, thisYear);
+                return {
+                    '연번': idx + 1,
+                    '상태': s.status || '재원',
+                    '이름': s.name || '',
+                    '학년': info.grade || '',
+                    '나이': info.age !== '-' ? `${info.age}세` : '',
+                    '생년월일': s.birth || '',
+                    '학교명': s.school || '',
+                    '부 성함': s.fatherName || '',
+                    '부 연락처': s.fatherPhone || '',
+                    '모 성함': s.motherName || '',
+                    '모 연락처': s.motherPhone || '',
+                    '대표 연락처': getRepresentativePhone(s),
+                    '주소': s.address || '',
+                    '카톡 검색명': s.kakaoName || s.name || '',
+                    '최초 입관일': s.joinDate || '',
+                    '국기원 날짜': s.kukkiwon || ''
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(excelRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "원생명부");
+            XLSX.writeFile(wb, `${dojangName}_원생명부(${currentStudentStatusFilter})_${todayIsoStr}.xlsx`);
+        };
+
+        window.exportTuitionListExcel = function() {
+            const activeList = getActiveStudents();
+            if (activeList.length === 0) {
+                alert("다운로드할 재원생 데이터가 없습니다.");
+                return;
+            }
+            const thisYear = new Date().getFullYear();
+            const targetList = currentTuitionFilter === 'unpaid' ? activeList.filter(s => !s.isPaid) : activeList;
+
+            const excelRows = targetList.map((s, idx) => {
+                const info = getAgeAndGrade(s.birth, thisYear);
+                return {
+                    '연번': idx + 1,
+                    '이름': s.name || '',
+                    '학년': info.grade || '',
+                    '학교명': s.school || '',
+                    '부 성함': s.fatherName || '',
+                    '모 성함': s.motherName || '',
+                    '대표 연락처': getRepresentativePhone(s),
+                    '최초 입관일': s.joinDate || '',
+                    '이번달 납부상태': s.isPaid ? '완납' : '미납',
+                    '입금/매칭 내역': s.paidMemo || ''
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(excelRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "회비수납내역");
+            const filterLabel = currentTuitionFilter === 'unpaid' ? '미납자' : '전체재원생';
+            XLSX.writeFile(wb, `${dojangName}_회비내역(${filterLabel})_${todayIsoStr}.xlsx`);
+        };
+
+        /* =========================================================
+           5. 한달 개근 재원생 계산, 화면 표시 및 엑셀 일괄 다운로드
+        ========================================================= */
+        function getMonthlyAttendanceMap(yearMonthStr) {
+            const map = {};
+            const allClassDates = new Set();
+
+            attendanceRecords.forEach(rec => {
+                const iso = ensureIsoDateOnRecord(rec);
+                if (!iso || !iso.startsWith(yearMonthStr)) return;
+                allClassDates.add(iso);
+
+                const pureRecName = String(rec.pureName || rec.name || '').replace(/\[.*?\]/g, '').trim();
+                if (!pureRecName) return;
+                if (!map[pureRecName]) map[pureRecName] = new Set();
+                map[pureRecName].add(iso);
+            });
+
+            return { studentDateSets: map, totalDojangOpenDays: allClassDates.size };
+        }
+
+        window.onPerfectMonthChange = function() {
+            autoSetPerfectTargetDays();
+        };
+
+        window.autoSetPerfectTargetDays = function() {
+            const ym = perfectMonthInput.value || currentMonthIsoStr;
+            const { totalDojangOpenDays } = getMonthlyAttendanceMap(ym);
+            const targetInput = document.getElementById('perfect-target-days');
+            targetInput.value = totalDojangOpenDays > 0 ? totalDojangOpenDays : 20;
+            renderPerfectAttendanceList();
+        };
+
+        function getPerfectAttendanceStudents() {
+            const ym = perfectMonthInput.value || currentMonthIsoStr;
+            const targetDays = Math.max(1, parseInt(document.getElementById('perfect-target-days').value, 10) || 1);
+            const { studentDateSets, totalDojangOpenDays } = getMonthlyAttendanceMap(ym);
+            const activeList = getActiveStudents();
+            const thisYear = new Date().getFullYear();
+
+            const perfectList = [];
+            activeList.forEach(s => {
+                const dateSet = studentDateSets[s.name] || new Set();
+                const attendedCount = dateSet.size;
+                if (attendedCount >= targetDays) {
+                    const info = getAgeAndGrade(s.birth, thisYear);
+                    perfectList.push({
+                        student: s,
+                        grade: info.grade,
+                        attendedCount: attendedCount,
+                        dates: Array.from(dateSet).sort().join(', ')
+                    });
+                }
+            });
+
+            return { ym, targetDays, totalDojangOpenDays, perfectList };
+        }
+
+        function renderPerfectAttendanceList() {
+            const tbody = document.getElementById('perfect-attendance-list');
+            const summaryEl = document.getElementById('perfect-summary-info');
+            if (!tbody) return;
+
+            const { ym, targetDays, totalDojangOpenDays, perfectList } = getPerfectAttendanceStudents();
+            summaryEl.textContent = `📅 [${ym}] 도장 실제 출석 기록 일수: 총 ${totalDojangOpenDays}일 | 현재 개근 기준: ${targetDays}일 이상 출석 | 🏆 한달 개근 달성 재원생: 총 ${perfectList.length}명`;
+
+            tbody.innerHTML = '';
+            if (perfectList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="color:#888; padding:1.5rem;">해당 월에 ${targetDays}일 이상 출석한 개근 재원생이 없습니다. (개근 기준 일수를 조정해 보세요)</td></tr>`;
+                return;
+            }
+
+            perfectList.forEach((item, idx) => {
+                const s = item.student;
+                const gradeBadge = item.grade ? `<span class="grade-tag">[${item.grade}]</span>` : '';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${idx + 1}</td>
+                    <td><strong>${s.name}</strong>${gradeBadge}</td>
+                    <td>${s.school || '-'}</td>
+                    <td>${getRepresentativePhone(s)}</td>
+                    <td><strong style="color:var(--primary-color);">${item.attendedCount}일</strong> / 기준 ${targetDays}일</td>
+                    <td><span class="status-badge status-paid">🏆 한달 개근</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.exportPerfectAttendanceExcel = function() {
+            const { ym, targetDays, perfectList } = getPerfectAttendanceStudents();
+            if (perfectList.length === 0) {
+                alert(`${ym}월에 기준 일수(${targetDays}일)를 달성한 개근 재원생이 없습니다.`);
+                return;
+            }
+
+            const excelRows = perfectList.map((item, idx) => {
+                const s = item.student;
+                return {
+                    '연번': idx + 1,
+                    '이름': s.name,
+                    '학년': item.grade || '',
+                    '이름[학년]': item.grade ? `${s.name}[${item.grade}]` : s.name,
+                    '학교명': s.school || '',
+                    '출석일수': `${item.attendedCount}일`,
+                    '개근기준': `${targetDays}일 이상`,
+                    '달성여부': '한달 개근',
+                    '대표연락처': getRepresentativePhone(s),
+                    '출석날짜목록': item.dates
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(excelRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "한달개근명단");
+            XLSX.writeFile(wb, `${dojangName}_${ym}_한달개근재원생명단(${perfectList.length}명).xlsx`);
+        };
+
+        /* =========================================================
+           6. 생년월일 기준 나이 및 학년 계산 (이름[학년])
+        ========================================================= */
+        function getAgeAndGrade(birthStr, targetYear) {
+            if (!birthStr) return { age: '-', grade: '' };
+            const parts = birthStr.split('-');
+            if (parts.length !== 3) return { age: '-', grade: '' };
+            const birthYear = parseInt(parts[0], 10);
+            const baseYear = targetYear || new Date().getFullYear();
+            const koreanAge = baseYear - birthYear + 1;
+            let grade = '';
+            if (koreanAge <= 7) grade = '유치부';
+            else if (koreanAge === 8) grade = '초1';
+            else if (koreanAge === 9) grade = '초2';
+            else if (koreanAge === 10) grade = '초3';
+            else if (koreanAge === 11) grade = '초4';
+            else if (koreanAge === 12) grade = '초5';
+            else if (koreanAge === 13) grade = '초6';
+            else if (koreanAge === 14) grade = '중1';
+            else if (koreanAge === 15) grade = '중2';
+            else if (koreanAge === 16) grade = '중3';
+            else if (koreanAge === 17) grade = '고1';
+            else if (koreanAge === 18) grade = '고2';
+            else if (koreanAge === 19) grade = '고3';
+            else grade = '성인';
+            return { age: koreanAge, grade: grade };
+        }
+
+        function formatNameWithGrade(name, birthStr, targetYear) {
+            const info = getAgeAndGrade(birthStr, targetYear);
+            return info.grade ? `${name}[${info.grade}]` : name;
+        }
+
+        function getRepresentativePhone(student) {
+            return student.motherPhone || student.fatherPhone || student.phone || '-';
+        }
+
+        for (let y = 2000; y <= 2099; y++) {
+            const opt = document.createElement('option');
+            opt.value = y; opt.textContent = y + '년';
+            yearSelect.appendChild(opt);
+        }
+        for (let m = 0; m < 12; m++) {
+            const opt = document.createElement('option');
+            opt.value = m; opt.textContent = (m + 1) + '월';
+            monthSelect.appendChild(opt);
+        }
+
+        function getActiveStudents() {
+            return students.filter(s => s.status !== '퇴관');
+        }
+
+        /* =========================================================
+           7. 대시보드 요약 업데이트
+        ========================================================= */
+        function updateDashboard() {
+            const activeList = getActiveStudents();
+            document.getElementById('dash-total-students').textContent = activeList.length + '명';
+            const todayCount = attendanceRecords.filter(r => ensureIsoDateOnRecord(r) === todayIsoStr).length;
+            document.getElementById('dash-today-attendance').textContent = todayCount + '명';
+            const unpaidCount = activeList.filter(s => !s.isPaid).length;
+            document.getElementById('dash-unpaid-count').textContent = unpaidCount + '명';
+            const thisMonth = new Date().getMonth() + 1;
+            const bCount = activeList.filter(s => {
+                if (!s.birth) return false;
+                const parts = s.birth.split('-');
+                return parts.length === 3 && parseInt(parts[1], 10) === thisMonth;
+            }).length;
+            document.getElementById('dash-month-birthdays').textContent = bCount + '명';
+        }
+
+        /* =========================================================
+           8. 원생 관리 렌더링 (20명 페이지네이션, 검색, 수정, 삭제)
+        ========================================================= */
+        window.setStudentStatusFilter = function(status) {
+            currentStudentStatusFilter = status;
+            currentStudentPage = 1;
+            document.getElementById('std-filter-active').classList.toggle('active', status === '재원');
+            document.getElementById('std-filter-withdrawn').classList.toggle('active', status === '퇴관');
+            document.getElementById('std-filter-all').classList.toggle('active', status === '전체');
+            renderStudents();
+        };
+
+        window.onStudentSearchInput = function() {
+            currentStudentPage = 1;
+            renderStudents();
+        };
+
+        window.goToStudentPage = function(pageNum) {
+            currentStudentPage = pageNum;
+            renderStudents();
+        };
+
+        window.toggleStudentStatus = function(id) {
+            const idx = students.findIndex(s => s.id === id);
+            if (idx > -1) {
+                students[idx].status = (students[idx].status === '퇴관') ? '재원' : '퇴관';
+                localStorage.setItem('taekwondo_students', JSON.stringify(students));
+                renderStudents();
+            }
+        };
+
+        window.onRowCheckboxChange = function(cb) {
+            const id = Number(cb.value);
+            if (cb.checked) selectedStudentIds.add(id);
+            else selectedStudentIds.delete(id);
+            updateSelectedStudentCount();
+        };
+
+        window.toggleSelectAllStudents = function(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('.student-select-cb');
+            checkboxes.forEach(cb => {
+                cb.checked = masterCheckbox.checked;
+                const id = Number(cb.value);
+                if (masterCheckbox.checked) selectedStudentIds.add(id);
+                else selectedStudentIds.delete(id);
+            });
+            updateSelectedStudentCount();
+        };
+
+        window.updateSelectedStudentCount = function() {
+            const validIds = new Set(students.map(s => Number(s.id)));
+            selectedStudentIds.forEach(id => {
+                if (!validIds.has(id)) selectedStudentIds.delete(id);
+            });
+
+            const btn = document.getElementById('btn-delete-selected');
+            if (btn) btn.textContent = `🗑️ 선택 삭제 (${selectedStudentIds.size}명)`;
+
+            const pageCheckboxes = Array.from(document.querySelectorAll('.student-select-cb'));
+            const masterCb = document.getElementById('select-all-students');
+            if (masterCb) {
+                masterCb.checked = (pageCheckboxes.length > 0 && pageCheckboxes.every(cb => cb.checked));
+            }
+        };
+
+        window.deleteSelectedStudents = function() {
+            if (selectedStudentIds.size === 0) {
+                alert("삭제할 원생을 왼쪽 체크박스에서 먼저 선택해 주세요.");
+                return;
+            }
+            if (confirm(`선택한 ${selectedStudentIds.size}명의 원생을 정말 삭제하시겠습니까?`)) {
+                students = students.filter(s => !selectedStudentIds.has(Number(s.id)));
+                selectedStudentIds.clear();
+                localStorage.setItem('taekwondo_students', JSON.stringify(students));
+                renderStudents();
+            }
+        };
+
+        window.deleteAllStudents = function() {
+            if (students.length === 0) {
+                alert("현재 등록된 원생이 없습니다.");
+                return;
+            }
+            if (confirm(`등록된 전체 원생(${students.length}명)을 모두 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+                students = [];
+                selectedStudentIds.clear();
+                currentStudentPage = 1;
+                localStorage.setItem('taekwondo_students', JSON.stringify(students));
+                renderStudents();
+            }
+        };
+
+        window.openEditStudentModal = function(id) {
+            const student = students.find(s => s.id === id);
+            if (!student) return;
+
+            document.getElementById('edit-std-id').value = student.id;
+            document.getElementById('edit-std-name').value = student.name || '';
+            document.getElementById('edit-std-birth').value = student.birth || '';
+            document.getElementById('edit-std-school').value = student.school || '';
+            document.getElementById('edit-std-father-name').value = student.fatherName || '';
+            document.getElementById('edit-std-father-phone').value = student.fatherPhone || '';
+            document.getElementById('edit-std-mother-name').value = student.motherName || '';
+            document.getElementById('edit-std-mother-phone').value = student.motherPhone || '';
+            document.getElementById('edit-std-phone').value = student.phone || '';
+            document.getElementById('edit-std-address').value = student.address || '';
+            document.getElementById('edit-std-kakao-name').value = student.kakaoName || student.name || '';
+            document.getElementById('edit-std-joindate').value = student.joinDate || '';
+            document.getElementById('edit-std-kukkiwon').value = student.kukkiwon || '';
+            document.getElementById('edit-std-status').value = student.status || '재원';
+
+            document.getElementById('edit-modal-overlay').classList.remove('hidden');
+        };
+
+        window.closeEditStudentModal = function() {
+            document.getElementById('edit-modal-overlay').classList.add('hidden');
+        };
+
+        editStudentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const targetId = Number(document.getElementById('edit-std-id').value);
+            const idx = students.findIndex(s => Number(s.id) === targetId);
+            if (idx === -1) return;
+
+            const rawName = document.getElementById('edit-std-name').value.trim();
+            const fName = document.getElementById('edit-std-father-name').value.trim();
+            const fPhone = document.getElementById('edit-std-father-phone').value.trim();
+            const mName = document.getElementById('edit-std-mother-name').value.trim();
+            const mPhone = document.getElementById('edit-std-mother-phone').value.trim();
+            const manualPhone = document.getElementById('edit-std-phone').value.trim();
+            const rawKakao = document.getElementById('edit-std-kakao-name').value.trim();
+
+            students[idx].name = rawName;
+            students[idx].birth = document.getElementById('edit-std-birth').value;
+            students[idx].school = document.getElementById('edit-std-school').value.trim();
+            students[idx].fatherName = fName;
+            students[idx].fatherPhone = fPhone;
+            students[idx].motherName = mName;
+            students[idx].motherPhone = mPhone;
+            students[idx].phone = mPhone || fPhone || manualPhone;
+            students[idx].address = document.getElementById('edit-std-address').value.trim();
+            students[idx].kakaoName = rawKakao || rawName;
+            students[idx].joinDate = document.getElementById('edit-std-joindate').value;
+            students[idx].kukkiwon = document.getElementById('edit-std-kukkiwon').value;
+            students[idx].status = document.getElementById('edit-std-status').value;
+
+            localStorage.setItem('taekwondo_students', JSON.stringify(students));
+            closeEditStudentModal();
+            renderStudents();
+            alert(`${rawName} 원생의 정보가 수정되었습니다.`);
+        });
+
+        function renderStudentPagination(totalItems, totalPages) {
+            paginationEl.innerHTML = '';
+            if (totalItems === 0) return;
+
+            const prevBtn = document.createElement('button');
+            prevBtn.type = 'button';
+            prevBtn.className = 'page-btn';
+            prevBtn.textContent = '◀ 이전';
+            prevBtn.disabled = (currentStudentPage <= 1);
+            prevBtn.onclick = () => goToStudentPage(currentStudentPage - 1);
+            paginationEl.appendChild(prevBtn);
+
+            for (let p = 1; p <= totalPages; p++) {
+                const pBtn = document.createElement('button');
+                pBtn.type = 'button';
+                pBtn.className = 'page-btn' + (p === currentStudentPage ? ' active' : '');
+                pBtn.textContent = p;
+                pBtn.onclick = () => goToStudentPage(p);
+                paginationEl.appendChild(pBtn);
+            }
+
+            const nextBtn = document.createElement('button');
+            nextBtn.type = 'button';
+            nextBtn.className = 'page-btn';
+            nextBtn.textContent = '다음 ▶';
+            nextBtn.disabled = (currentStudentPage >= totalPages);
+            nextBtn.onclick = () => goToStudentPage(currentStudentPage + 1);
+            paginationEl.appendChild(nextBtn);
+
+            const startIdx = (currentStudentPage - 1) * STUDENTS_PER_PAGE + 1;
+            const endIdx = Math.min(currentStudentPage * STUDENTS_PER_PAGE, totalItems);
+            const infoSpan = document.createElement('span');
+            infoSpan.className = 'page-info-text';
+            infoSpan.textContent = `총 ${totalItems}명 중 ${startIdx}~${endIdx}번째 표시 (페이지당 20명)`;
+            paginationEl.appendChild(infoSpan);
+        }
+
+        function renderStudents() {
+            studentList.innerHTML = '';
+            const thisYear = new Date().getFullYear();
+
+            const activeCount = students.filter(s => s.status !== '퇴관').length;
+            const withdrawnCount = students.filter(s => s.status === '퇴관').length;
+            document.getElementById('count-active').textContent = activeCount;
+            document.getElementById('count-withdrawn').textContent = withdrawnCount;
+            document.getElementById('count-all').textContent = students.length;
+
+            let filtered = students;
+            if (currentStudentStatusFilter === '재원') filtered = students.filter(s => s.status !== '퇴관');
+            else if (currentStudentStatusFilter === '퇴관') filtered = students.filter(s => s.status === '퇴관');
+
+            const searchInput = document.getElementById('student-search-input');
+            const keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            if (keyword !== '') {
+                filtered = filtered.filter(s => {
+                    const combined = `${s.name || ''} ${s.fatherName || ''} ${s.motherName || ''} ${s.school || ''} ${s.phone || ''} ${s.motherPhone || ''} ${s.fatherPhone || ''}`.toLowerCase();
+                    return combined.includes(keyword);
+                });
+            }
+
+            const totalItems = filtered.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / STUDENTS_PER_PAGE));
+            if (currentStudentPage > totalPages) currentStudentPage = totalPages;
+            if (currentStudentPage < 1) currentStudentPage = 1;
+
+            const startIdx = (currentStudentPage - 1) * STUDENTS_PER_PAGE;
+            const pageStudents = filtered.slice(startIdx, startIdx + STUDENTS_PER_PAGE);
+
+            if (pageStudents.length === 0) {
+                studentList.innerHTML = '<tr><td colspan="13" style="color:#888; padding:2rem;">해당하는 원생이 없습니다.</td></tr>';
+            } else {
+                pageStudents.forEach((student) => {
+                    const tr = document.createElement('tr');
+                    const isWithdrawn = (student.status === '퇴관');
+                    if (isWithdrawn) tr.classList.add('row-withdrawn');
+
+                    const kDate = student.kukkiwon ? student.kukkiwon : '<span style="color:#aaa;">-</span>';
+                    const jDate = student.joinDate ? student.joinDate : '<span style="color:#aaa;">-</span>';
+                    const info = getAgeAndGrade(student.birth, thisYear);
+                    const bDate = student.birth ? `${student.birth} (${info.age}세)` : '<span style="color:#e53e3e;">미입력</span>';
+                    const gradeBadge = info.grade ? `<span class="grade-tag">[${info.grade}]</span>` : '';
+                    const kakaoSearch = student.kakaoName || student.name;
+                    const repPhone = getRepresentativePhone(student);
+                    const statusBtnClass = isWithdrawn ? 'status-withdrawn' : 'status-active';
+                    const statusText = isWithdrawn ? '퇴관' : '재원';
+                    const isChecked = selectedStudentIds.has(Number(student.id)) ? 'checked' : '';
+
+                    const fatherInfo = (student.fatherName || student.fatherPhone)
+                        ? `${student.fatherName || ''}${student.fatherPhone ? '<br><span style="font-size:0.8rem; color:#555;">' + student.fatherPhone + '</span>' : ''}`
+                        : '<span style="color:#ccc;">-</span>';
+                    const motherInfo = (student.motherName || student.motherPhone)
+                        ? `${student.motherName || ''}${student.motherPhone ? '<br><span style="font-size:0.8rem; color:#555;">' + student.motherPhone + '</span>' : ''}`
+                        : '<span style="color:#ccc;">-</span>';
+
+                    tr.innerHTML = `
+                        <td><input type="checkbox" class="row-checkbox student-select-cb" value="${student.id}" onchange="onRowCheckboxChange(this)" ${isChecked}></td>
+                        <td><button type="button" class="btn-status-toggle ${statusBtnClass}" onclick="toggleStudentStatus(${student.id})">${statusText}</button></td>
+                        <td><strong>${student.name}</strong>${gradeBadge}</td>
+                        <td>${bDate}</td>
+                        <td>${student.school || '-'}</td>
+                        <td>${fatherInfo}</td>
+                        <td>${motherInfo}</td>
+                        <td><strong>${repPhone}</strong></td>
+                        <td style="max-width:170px; word-break:keep-all;">${student.address || '-'}</td>
+                        <td style="color:#4F46E5; font-weight:bold;">${kakaoSearch}</td>
+                        <td>${jDate}</td>
+                        <td>${kDate}</td>
+                        <td>
+                            <div class="action-cell-btns">
+                                <button type="button" class="btn-edit" onclick="openEditStudentModal(${student.id})">수정</button>
+                                <button type="button" class="btn-delete" onclick="deleteStudent(${student.id})">삭제</button>
+                            </div>
+                        </td>
+                    `;
+                    studentList.appendChild(tr);
+                });
+            }
+
+            renderStudentPagination(totalItems, totalPages);
+            updateSelectedStudentCount();
+            renderTuitionList();
+            renderCalendar();
+            renderPerfectAttendanceList();
+            updateDashboard();
+        }
+
+        studentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const rawName = document.getElementById('std-name').value.trim();
+            if (isHeaderOrLabelName(rawName)) {
+                alert("유효한 원생 이름을 입력해 주세요.");
+                return;
+            }
+            const rawKakao = document.getElementById('std-kakao-name').value.trim();
+            const fName = document.getElementById('std-father-name').value.trim();
+            const fPhone = document.getElementById('std-father-phone').value.trim();
+            const mName = document.getElementById('std-mother-name').value.trim();
+            const mPhone = document.getElementById('std-mother-phone').value.trim();
+            const manualPhone = document.getElementById('std-phone').value.trim();
+
+            const finalRepPhone = mPhone || fPhone || manualPhone;
+            const finalKakaoName = rawKakao || rawName;
+
+            const newStudent = {
+                id: Date.now() + Math.floor(Math.random() * 1000),
+                name: rawName,
+                kakaoName: finalKakaoName,
+                birth: document.getElementById('std-birth').value,
+                school: document.getElementById('std-school').value.trim(),
+                phone: finalRepPhone,
+                fatherName: fName,
+                fatherPhone: fPhone,
+                motherName: mName,
+                motherPhone: mPhone,
+                address: document.getElementById('std-address').value.trim(),
+                joinDate: document.getElementById('std-joindate').value,
+                kukkiwon: document.getElementById('std-kukkiwon').value,
+                status: document.getElementById('std-status').value || '재원',
+                isPaid: false,
+                paidMemo: ''
+            };
+            students.push(newStudent);
+            localStorage.setItem('taekwondo_students', JSON.stringify(students));
+            renderStudents();
+            studentForm.reset();
+            joinDateInput.value = todayIsoStr;
+            const formattedName = formatNameWithGrade(newStudent.name, newStudent.birth, new Date().getFullYear());
+            alert(`${formattedName} 수련생 등록 완료!`);
+        });
+
+        window.deleteStudent = function(id) {
+            if (confirm('해당 원생을 삭제하시겠습니까?')) {
+                students = students.filter(student => student.id !== id);
+                selectedStudentIds.delete(Number(id));
+                localStorage.setItem('taekwondo_students', JSON.stringify(students));
+                renderStudents();
+            }
+        };
+
+        /* =========================================================
+           9. 날짜 변환기 & 한글(HWP) 표 분석 엔진
+        ========================================================= */
+        function normalizeSingleDateToken(val) {
+            if (val === undefined || val === null || val === '') return '';
+            if (typeof val === 'number' && val > 15000 && val < 80000) {
+                const d = new Date(Math.round((val - 25569) * 86400 * 1000));
+                return d.toISOString().split('T')[0];
+            }
+            let str = String(val).trim();
+
+            const sixDigitWithCode = str.match(/(\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])[-.\s~]*([1-8])/);
+            if (sixDigitWithCode) {
+                const yy = sixDigitWithCode[1], mm = sixDigitWithCode[2], dd = sixDigitWithCode[3], g = sixDigitWithCode[4];
+                const century = (g === '1' || g === '2' || g === '5' || g === '6') ? '19' : '20';
+                return `${century}${yy}-${mm}-${dd}`;
+            }
+
+            let cleaned = str.replace(/[./년월]/g, '-').replace(/일|\s+/g, '');
+            if (cleaned.endsWith('-')) cleaned = cleaned.slice(0, -1);
+            const parts = cleaned.split('-').filter(Boolean);
+            if (parts.length === 3) {
+                let y = parts[0];
+                if (y.length === 2) y = (parseInt(y, 10) > 35 ? '19' : '20') + y;
+                const m = parts[1].padStart(2, '0');
+                const d = parts[2].padStart(2, '0');
+                if (y.length === 4 && parseInt(m, 10) >= 1 && parseInt(m, 10) <= 12 && parseInt(d, 10) >= 1 && parseInt(d, 10) <= 31) {
+                    return `${y}-${m}-${d}`;
+                }
+            }
+
+            const digitsOnly = str.replace(/[^0-9]/g, '');
+            if (digitsOnly.length === 8) {
+                const y = digitsOnly.slice(0,4), m = digitsOnly.slice(4,6), d = digitsOnly.slice(6,8);
+                if (parseInt(m, 10) >= 1 && parseInt(m, 10) <= 12 && parseInt(d, 10) >= 1 && parseInt(d, 10) <= 31) {
+                    return `${y}-${m}-${d}`;
+                }
+            }
+            if (digitsOnly.length >= 6) {
+                const yy = parseInt(digitsOnly.slice(0,2), 10);
+                const mm = digitsOnly.slice(2,4);
+                const dd = digitsOnly.slice(4,6);
+                if (parseInt(mm, 10) >= 1 && parseInt(mm, 10) <= 12 && parseInt(dd, 10) >= 1 && parseInt(dd, 10) <= 31) {
+                    const prefix = (yy > 35) ? '19' : '20';
+                    return `${prefix}${digitsOnly.slice(0,2)}-${mm}-${dd}`;
+                }
+            }
+            return '';
+        }
+
+        function extractAllDatesFromText(rawVal) {
+            if (rawVal === undefined || rawVal === null || rawVal === '') return [];
+            if (typeof rawVal === 'number') {
+                const single = normalizeSingleDateToken(rawVal);
+                return single ? [single] : [];
+            }
+            const lines = String(rawVal).split(/\r?\n/);
+            const results = [];
+
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                if (!trimmed) return;
+
+                let foundInLine = false;
+                const dateRegex = /((?:19|20)?\d{2})\s*[-./년]\s*(0?[1-9]|1[0-2])\s*[-./월]\s*(0?[1-9]|[12]\d|3[01])\s*일?/g;
+                let match;
+                while ((match = dateRegex.exec(trimmed)) !== null) {
+                    let y = match[1];
+                    if (y.length === 2) y = (parseInt(y, 10) > 35 ? '19' : '20') + y;
+                    const m = String(match[2]).padStart(2, '0');
+                    const d = String(match[3]).padStart(2, '0');
+                    results.push(`${y}-${m}-${d}`);
+                    foundInLine = true;
+                }
+
+                if (!foundInLine) {
+                    const tokens = trimmed.split(/[\s,~\/|]+/);
+                    tokens.forEach(tok => {
+                        const d = normalizeSingleDateToken(tok);
+                        if (d) results.push(d);
+                    });
+                }
+            });
+
+            return results;
+        }
+
+        function pickJoinDateRule(dateList, fallbackDate) {
+            if (!dateList || dateList.length === 0) return fallbackDate || '';
+            if (dateList.length >= 2) return dateList[1];
+            return dateList[0];
+        }
+
+        function extractNameAndPhoneFromCells(cellTexts) {
+            let foundPhone = '';
+            let nameCandidates = [];
+
+            const combined = cellTexts.join(' ').replace(/\r?\n/g, ' ').trim();
+            const phoneRegex = /(01[016789][-\s.]?\d{3,4}[-\s.]?\d{4}|0\d{1,2}[-\s.]?\d{3,4}[-\s.]?\d{4})/g;
+            const phoneMatches = combined.match(phoneRegex);
+            if (phoneMatches && phoneMatches.length > 0) {
+                const digits = phoneMatches[0].replace(/[^0-9]/g, '');
+                if (digits.length === 11) foundPhone = `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7,11)}`;
+                else if (digits.length === 10) foundPhone = `${digits.slice(0,3)}-${digits.slice(3,6)}-${digits.slice(6,10)}`;
+                else foundPhone = phoneMatches[0].trim();
+            }
+
+            cellTexts.forEach(txt => {
+                let rem = String(txt || '').replace(phoneRegex, ' ').replace(/[():：/\[\]\-_.,0-9]/g, ' ').trim();
+                const words = rem.split(/\s+/).filter(Boolean);
+                words.forEach(w => {
+                    if (!isHeaderOrLabelName(w) && w.length >= 2) {
+                        nameCandidates.push(w);
+                    }
+                });
+            });
+
+            return {
+                name: nameCandidates.length > 0 ? nameCandidates[0] : '',
+                phone: foundPhone
+            };
+        }
+
+        function classifyTopHeaderGroup(rawKey) {
+            const k = cleanLabelKey(rawKey);
+            if (!k) return '';
+            if (k.includes('입관') || k.includes('수련시작')) return 'joinDate';
+            if (k.includes('주소') && k.includes('주민')) return 'addr_rrn';
+            if (k.includes('부모') || k.includes('보호자')) return 'parent';
+            if (k === '부' || k.includes('부성함') || k.includes('아버지')) return 'fatherName';
+            if (k.includes('부연락') || k.includes('부전화')) return 'fatherPhone';
+            if (k === '모' || k.includes('모성함') || k.includes('어머니')) return 'motherName';
+            if (k.includes('모연락') || k.includes('모전화')) return 'motherPhone';
+            if (k.includes('전화') || k.includes('연락') || k.includes('휴대')) return 'phone';
+            if (k.includes('이름') || k.includes('성명') || k.includes('관원생') || k.includes('원생')) return 'name';
+            if (k.includes('주민') || k.includes('생년') || k.includes('생일')) return 'birth';
+            if (k.includes('주소') || k.includes('거주지')) return 'address';
+            if (k.includes('학교') || k.includes('유치원')) return 'school';
+            if (k.includes('국기원') || k.includes('심사')) return 'kukkiwon';
+            if (k.includes('상태') || k.includes('재원') || k.includes('퇴관')) return 'status';
+            return '';
+        }
+
+        function htmlTableToRichGrid(tableEl) {
+            const grid = [];
+            const rows = tableEl.querySelectorAll('tr');
+            rows.forEach((tr, rIdx) => {
+                if (!grid[rIdx]) grid[rIdx] = [];
+                let cIdx = 0;
+                const cells = tr.querySelectorAll('th, td');
+                cells.forEach(cell => {
+                    while (grid[rIdx][cIdx] !== undefined) cIdx++;
+                    const text = (cell.innerText || cell.textContent || '').replace(/\r\n/g, '\n').trim();
+                    const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
+                    const colspan = parseInt(cell.getAttribute('colspan') || '1', 10);
+                    const cellId = `${rIdx}_${cIdx}`;
+
+                    for (let dr = 0; dr < rowspan; dr++) {
+                        for (let dc = 0; dc < colspan; dc++) {
+                            if (!grid[rIdx + dr]) grid[rIdx + dr] = [];
+                            grid[rIdx + dr][cIdx + dc] = {
+                                text: text,
+                                cellId: cellId,
+                                isOrigin: (dr === 0 && dc === 0),
+                                isColOrigin: (dc === 0)
+                            };
+                        }
+                    }
+                    cIdx += colspan;
+                });
+            });
+            return grid;
+        }
+
+        function plainGridToRichGrid(plain2D) {
+            return plain2D.map((row, rIdx) =>
+                row.map((val, cIdx) => ({
+                    text: String(val || '').trim(),
+                    cellId: `${rIdx}_${cIdx}`,
+                    isOrigin: true,
+                    isColOrigin: true
+                }))
+            );
+        }
+
+        function importFromRichGrid(richGrid) {
+            if (!richGrid || richGrid.length === 0) return 0;
+            let addedCount = 0;
+
+            const colRoles = [];
+            let startRow = 0;
+            const row0Texts = richGrid[0].map(c => c ? c.text : '');
+            const nonEmptyRow0 = row0Texts.filter(t => t !== '');
+            const row0IsHeader = nonEmptyRow0.length > 0 && nonEmptyRow0.every(t => isHeaderOrLabelName(t));
+
+            if (row0IsHeader) {
+                richGrid[0].forEach((cell, cIdx) => {
+                    colRoles[cIdx] = classifyTopHeaderGroup(cell ? cell.text : '');
+                });
+                startRow = 1;
+
+                if (richGrid.length > 1) {
+                    const row1Texts = richGrid[1].map(c => c ? c.text : '').filter(t => t !== '');
+                    if (row1Texts.length > 0 && row1Texts.every(t => isHeaderOrLabelName(t))) {
+                        richGrid[1].forEach((cell, cIdx) => {
+                            const subRole = classifyTopHeaderGroup(cell ? cell.text : '');
+                            if (subRole) colRoles[cIdx] = subRole;
+                        });
+                        startRow = 2;
+                    }
+                }
+            }
+
+            let nameColIdx = colRoles.findIndex(r => r === 'name');
+            let currentStudent = null;
+            let processedJoinCellIds = new Set();
+
+            function finalizeAndPushStudent(stu) {
+                if (!stu || !stu.name || isHeaderOrLabelName(stu.name)) return;
+                stu.phone = stu.motherPhone || stu.fatherPhone || stu.phone || '';
+                stu.kakaoName = stu.name;
+                stu.joinDate = pickJoinDateRule(stu.joinDatesCollected, todayIsoStr);
+                delete stu.joinDatesCollected;
+                delete stu.nameCellId;
+                students.push(stu);
+                addedCount++;
+            }
+
+            for (let r = startRow; r < richGrid.length; r++) {
+                const row = richGrid[r];
+                if (!row || row.every(c => !c || !c.text)) continue;
+
+                const nonEmptyCells = row.filter(c => c && c.text !== '');
+                if (nonEmptyCells.every(c => isHeaderOrLabelName(c.text))) continue;
+
+                let rowName = '';
+                let rowNameCellId = '';
+
+                if (nameColIdx >= 0 && row[nameColIdx]) {
+                    const candidate = row[nameColIdx].text.replace(/\r?\n/g, ' ').trim();
+                    if (candidate && !isHeaderOrLabelName(candidate)) {
+                        rowName = candidate;
+                        rowNameCellId = row[nameColIdx].cellId;
+                    }
+                }
+
+                if (!rowName) {
+                    for (let c = 0; c < row.length - 1; c++) {
+                        const k = cleanLabelKey(row[c] ? row[c].text : '');
+                        if (k === '이름' || k === '관원생이름' || k === '원생이름' || k === '성명') {
+                            const nextCell = row[c + 1];
+                            if (nextCell && nextCell.text && !isHeaderOrLabelName(nextCell.text)) {
+                                rowName = nextCell.text.replace(/\r?\n/g, ' ').trim();
+                                rowNameCellId = nextCell.cellId;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                const hasSubRowMarkers = row.some(c => {
+                    const k = cleanLabelKey(c ? c.text : '');
+                    return k === '모' || k === '어머니' || k === '주민' || k === '주민번호';
+                });
+
+                if (rowName) {
+                    if (!currentStudent) {
+                        currentStudent = {
+                            id: Date.now() + r + Math.floor(Math.random() * 10000),
+                            name: rowName, nameCellId: rowNameCellId,
+                            kakaoName: rowName, birth: '', school: '', phone: '',
+                            fatherName: '', fatherPhone: '', motherName: '', motherPhone: '',
+                            address: '', joinDate: todayIsoStr, kukkiwon: '',
+                            status: '재원', isPaid: false, paidMemo: '', joinDatesCollected: []
+                        };
+                        processedJoinCellIds.clear();
+                    } else if (rowNameCellId !== currentStudent.nameCellId && !(rowName === currentStudent.name && hasSubRowMarkers)) {
+                        finalizeAndPushStudent(currentStudent);
+                        currentStudent = {
+                            id: Date.now() + r + Math.floor(Math.random() * 10000),
+                            name: rowName, nameCellId: rowNameCellId,
+                            kakaoName: rowName, birth: '', school: '', phone: '',
+                            fatherName: '', fatherPhone: '', motherName: '', motherPhone: '',
+                            address: '', joinDate: todayIsoStr, kukkiwon: '',
+                            status: '재원', isPaid: false, paidMemo: '', joinDatesCollected: []
+                        };
+                        processedJoinCellIds.clear();
+                    }
+                }
+
+                if (!currentStudent) continue;
+
+                for (let c = 0; c < row.length; c++) {
+                    const cell = row[c];
+                    if (!cell || !cell.text) continue;
+                    const rawText = cell.text.trim();
+                    const key = cleanLabelKey(rawText);
+                    const role = colRoles[c] || '';
+
+                    if (key === '부' || key === '아버지' || key === '부성함') {
+                        const rightTexts = [];
+                        for (let k = c + 1; k < row.length; k++) {
+                            if (!row[k] || row[k].cellId === cell.cellId) continue;
+                            const rk = cleanLabelKey(row[k].text);
+                            const rRole = colRoles[k] || '';
+                            if (rk === '모' || rk === '어머니' || rk === '주소' || rk === '주민' || rk === '주민번호' || rRole === 'addr_rrn' || rRole === 'joinDate' || rRole === 'address' || rRole === 'birth') break;
+                            if (row[k].isColOrigin && row[k].text) rightTexts.push(row[k].text);
+                        }
+                        const parsed = extractNameAndPhoneFromCells(rightTexts);
+                        if (parsed.name) currentStudent.fatherName = parsed.name;
+                        if (parsed.phone) currentStudent.fatherPhone = parsed.phone;
+                        continue;
+                    }
+
+                    if (key === '모' || key === '어머니' || key === '모성함') {
+                        const rightTexts = [];
+                        for (let k = c + 1; k < row.length; k++) {
+                            if (!row[k] || row[k].cellId === cell.cellId) continue;
+                            const rk = cleanLabelKey(row[k].text);
+                            const rRole = colRoles[k] || '';
+                            if (rk === '부' || rk === '아버지' || rk === '주소' || rk === '주민' || rk === '주민번호' || rRole === 'addr_rrn' || rRole === 'joinDate' || rRole === 'address' || rRole === 'birth') break;
+                            if (row[k].isColOrigin && row[k].text) rightTexts.push(row[k].text);
+                        }
+                        const parsed = extractNameAndPhoneFromCells(rightTexts);
+                        if (parsed.name) currentStudent.motherName = parsed.name;
+                        if (parsed.phone) currentStudent.motherPhone = parsed.phone;
+                        continue;
+                    }
+
+                    if (key === '주소' || key === '집주소' || key === '거주지') {
+                        const addrParts = [];
+                        for (let k = c + 1; k < row.length; k++) {
+                            if (!row[k] || row[k].cellId === cell.cellId) continue;
+                            const rk = cleanLabelKey(row[k].text);
+                            const rRole = colRoles[k] || '';
+                            if (rk === '주민' || rk === '주민번호' || rk === '입관일' || rk === '수련시작일' || rRole === 'joinDate') break;
+                            if (row[k].isColOrigin && row[k].text && !isHeaderOrLabelName(row[k].text)) {
+                                addrParts.push(row[k].text.replace(/\r?\n/g, ' ').trim());
+                            }
+                        }
+                        if (addrParts.length > 0) currentStudent.address = addrParts.join(' ');
+                        continue;
+                    }
+
+                    if (key === '주민' || key === '주민번호' || key === '주민등록번호' || key === '생년월일') {
+                        for (let k = c + 1; k < row.length; k++) {
+                            if (!row[k] || row[k].cellId === cell.cellId) continue;
+                            const b = normalizeSingleDateToken(row[k].text);
+                            if (b) {
+                                currentStudent.birth = b;
+                                break;
+                            }
+                        }
+                        continue;
+                    }
+
+                    if (role === 'joinDate' && !isHeaderOrLabelName(rawText)) {
+                        if (!processedJoinCellIds.has(cell.cellId)) {
+                            processedJoinCellIds.add(cell.cellId);
+                            const dates = extractAllDatesFromText(rawText);
+                            currentStudent.joinDatesCollected.push(...dates);
+                        }
+                        continue;
+                    }
+                    if (key === '입관일' || key === '수련시작일' || key === '입관일수련시작일' || key === '최초입관일') {
+                        for (let k = c + 1; k < row.length; k++) {
+                            if (!row[k] || row[k].cellId === cell.cellId) continue;
+                            const dates = extractAllDatesFromText(row[k].text);
+                            if (dates.length > 0) {
+                                currentStudent.joinDatesCollected.push(...dates);
+                                break;
+                            }
+                        }
+                        continue;
+                    }
+
+                    if (!isHeaderOrLabelName(rawText)) {
+                        if (role === 'fatherName' && !currentStudent.fatherName) currentStudent.fatherName = rawText;
+                        else if (role === 'fatherPhone' && !currentStudent.fatherPhone) currentStudent.fatherPhone = rawText;
+                        else if (role === 'motherName' && !currentStudent.motherName) currentStudent.motherName = rawText;
+                        else if (role === 'motherPhone' && !currentStudent.motherPhone) currentStudent.motherPhone = rawText;
+                        else if (role === 'birth' && !currentStudent.birth) {
+                            const b = normalizeSingleDateToken(rawText);
+                            if (b) currentStudent.birth = b;
+                        }
+                        else if (role === 'address' && !currentStudent.address) currentStudent.address = rawText.replace(/\r?\n/g, ' ');
+                        else if (role === 'school' && !currentStudent.school) currentStudent.school = rawText;
+                        else if (role === 'kukkiwon' && !currentStudent.kukkiwon) {
+                            const kd = normalizeSingleDateToken(rawText);
+                            if (kd) currentStudent.kukkiwon = kd;
+                        }
+                        else if (role === 'status') {
+                            currentStudent.status = (rawText.includes('퇴') || rawText.includes('휴')) ? '퇴관' : '재원';
+                        }
+                    }
+                }
+            }
+
+            finalizeAndPushStudent(currentStudent);
+
+            if (addedCount > 0) {
+                localStorage.setItem('taekwondo_students', JSON.stringify(students));
+                renderStudents();
+            }
+            return addedCount;
+        }
+
+        window.toggleHwpPasteBox = function(forceOpen) {
+            const box = document.getElementById('hwp-paste-box');
+            if (forceOpen === true) box.classList.remove('hidden');
+            else box.classList.toggle('hidden');
+        };
+
+        window.clearHwpPasteBox = function() {
+            document.getElementById('hwp-paste-editor').innerHTML = '';
+        };
+
+        window.processHwpPasteData = function() {
+            const editor = document.getElementById('hwp-paste-editor');
+            const tables = editor.querySelectorAll('table');
+            let totalAdded = 0;
+
+            if (tables.length > 0) {
+                tables.forEach(tbl => {
+                    const richGrid = htmlTableToRichGrid(tbl);
+                    totalAdded += importFromRichGrid(richGrid);
+                });
+            } else {
+                const rawText = (editor.innerText || editor.textContent || '').trim();
+                if (!rawText) {
+                    alert("붙여넣은 내용이 없습니다. 한글(HWP)이나 엑셀에서 표를 복사(Ctrl+C)한 뒤 붙여넣어 주세요.");
+                    return;
+                }
+                const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
+                const delimiter = lines.some(l => l.includes('\t')) ? '\t' : ',';
+                const plain2D = lines.map(line => line.split(delimiter).map(c => c.trim()));
+                totalAdded += importFromRichGrid(plainGridToRichGrid(plain2D));
+            }
+
+            if (totalAdded > 0) {
+                clearHwpPasteBox();
+                toggleHwpPasteBox();
+                alert(`🎉 표에서 총 ${totalAdded}명의 원생이 정확하게 등록되었습니다!`);
+            } else {
+                alert("등록할 수 있는 원생 정보를 찾지 못했습니다. 표에 원생 이름이 포함되어 있는지 확인해 주세요.");
+            }
+        };
+
+        function parseExcelOrCsvFile(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const plain2D = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
+                    callback(plain2D);
+                } catch (err) {
+                    alert("파일을 읽는 중 오류가 발생했습니다. 한글(.hwp) 문서인 경우 옆의 [📋 한글(HWP) 표 붙여넣기] 기능을 이용해 주세요.");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        window.handleStudentFileUpload = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.name.toLowerCase().endsWith('.hwp')) {
+                alert("한글(.hwp) 파일은 문서에서 표를 복사(Ctrl+C)한 뒤 [📋 한글(HWP) 표 붙여넣기] 칸에 붙여넣으시면 완벽하게 등록됩니다!");
+                event.target.value = '';
+                toggleHwpPasteBox(true);
+                return;
+            }
+            parseExcelOrCsvFile(file, function(plain2D) {
+                if (!plain2D || plain2D.length === 0) {
+                    alert("파일에 데이터가 없습니다.");
+                    return;
+                }
+                const count = importFromRichGrid(plainGridToRichGrid(plain2D));
+                event.target.value = '';
+                alert(`🎉 파일에서 총 ${count}명의 원생이 자동으로 업로드되었습니다!`);
+            });
+        };
+
+        window.downloadStudentSampleCSV = function() {
+            const csvContent = "\uFEFF관원생 이름,생년월일,학교명,부성함,부연락처,모성함,모연락처,주소,입관일,수련시작일,국기원날짜,상태\n홍길동,2015-05-15,타이거초,홍판서,010-1111-2222,김부인,010-3333-4444,천안시 서북구 불당동,2024-03-02,2025-05-01,,재원\n김철수,2017-10-20,용인초,김갑수,010-5555-6666,이영희,010-9876-5432,천안시 동남구 신부동,2026-01-10,,,재원";
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "태권도장_관원생명단_양식.csv";
+            a.click();
+        };
+
+        /* =========================================================
+           10. 은행 입출금 & 지역상품권(chak) O*O 마스킹 + 부모님 성함 매칭
+        ========================================================= */
+        window.resetAllTuitionUnpaid = function() {
+            if (students.length === 0) {
+                alert("등록된 원생이 없습니다.");
+                return;
+            }
+            if (confirm("새 달을 맞아 전체 원생의 회비 납부 상태를 모두 [미납]으로 초기화하시겠습니까?")) {
+                students.forEach(s => {
+                    s.isPaid = false;
+                    s.paidMemo = '';
+                });
+                localStorage.setItem('taekwondo_students', JSON.stringify(students));
+                renderTuitionList();
+                updateDashboard();
+                alert("🔄 모든 원생의 회비 상태가 [미납]으로 초기화되었습니다.");
+            }
+        };
+
+        window.handleBankFileUpload = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+
+                    if (!rows || rows.length === 0) {
+                        alert("입출금 내역 파일에 데이터가 없습니다.");
+                        return;
+                    }
+
+                    const activeList = getActiveStudents();
+                    let matchedLogs = [];
+                    let ambiguousLogs = [];
+
+                    rows.forEach(row => {
+                        const rowValues = Object.values(row).map(v => String(v).trim());
+                        const rowCombinedText = rowValues.join(' ');
+                        if (!rowCombinedText) return;
+
+                        let depositAmount = '';
+                        Object.keys(row).forEach(k => {
+                            const cleanK = k.replace(/\s+/g, '');
+                            if (cleanK.includes('입금') || cleanK.includes('맡기신') || cleanK.includes('결제') || cleanK.includes('금액')) {
+                                const num = String(row[k]).replace(/[^0-9]/g, '');
+                                if (num && parseInt(num, 10) > 0) {
+                                    depositAmount = Number(num).toLocaleString() + '원';
+                                }
+                            }
+                        });
+
+                        let exactMatchedInRow = false;
+
+                        activeList.forEach(student => {
+                            const sName = student.name ? student.name.trim() : '';
+                            const fName = student.fatherName ? student.fatherName.trim() : '';
+                            const mName = student.motherName ? student.motherName.trim() : '';
+
+                            let matchType = '';
+                            if (sName.length >= 2 && rowCombinedText.includes(sName)) {
+                                matchType = `원생(${sName})`;
+                            } else if (mName.length >= 2 && rowCombinedText.includes(mName)) {
+                                matchType = `모(${mName})`;
+                            } else if (fName.length >= 2 && rowCombinedText.includes(fName)) {
+                                matchType = `부(${fName})`;
+                            }
+
+                            if (matchType) {
+                                exactMatchedInRow = true;
+                                student.isPaid = true;
+                                student.paidMemo = `${matchType} 일치 ${depositAmount ? '(' + depositAmount + ')' : ''}`;
+                                const logStr = `${student.name} ← ${matchType}`;
+                                if (!matchedLogs.includes(logStr)) matchedLogs.push(logStr);
+                            }
+                        });
+
+                        if (!exactMatchedInRow) {
+                            const maskRegex = /([가-힣])[\*○●◯xX\?]+([가-힣])/g;
+                            let match;
+                            while ((match = maskRegex.exec(rowCombinedText)) !== null) {
+                                const maskedFull = match[0];
+                                const firstChar = match[1];
+                                const lastChar = match[2];
+
+                                const candidates = [];
+                                activeList.forEach(student => {
+                                    const checkTarget = [
+                                        { label: '원생', val: student.name },
+                                        { label: '모', val: student.motherName },
+                                        { label: '부', val: student.fatherName }
+                                    ];
+                                    for (let t of checkTarget) {
+                                        if (t.val && t.val.length >= 2 && t.val.startsWith(firstChar) && t.val.endsWith(lastChar)) {
+                                            candidates.push({ student: student, matchedWho: `${t.label}(${t.val})` });
+                                            break;
+                                        }
+                                    }
+                                });
+
+                                if (candidates.length === 1) {
+                                    const target = candidates[0].student;
+                                    const who = candidates[0].matchedWho;
+                                    target.isPaid = true;
+                                    target.paidMemo = `chak(${maskedFull}) → ${who} ${depositAmount ? '(' + depositAmount + ')' : ''}`;
+                                    const logStr = `${target.name} ← chak[${maskedFull}:${who}]`;
+                                    if (!matchedLogs.includes(logStr)) matchedLogs.push(logStr);
+                                } else if (candidates.length > 1) {
+                                    const names = candidates.map(c => `${c.student.name}(${c.matchedWho})`).join(', ');
+                                    const ambStr = `[${maskedFull}] 후보 중복: ${names}`;
+                                    if (!ambiguousLogs.includes(ambStr)) ambiguousLogs.push(ambStr);
+                                }
+                            }
+                        }
+                    });
+
+                    localStorage.setItem('taekwondo_students', JSON.stringify(students));
+                    renderTuitionList();
+                    updateDashboard();
+                    event.target.value = '';
+
+                    let resultMsg = `💳 입출금 및 지역상품권(chak) 내역 동기화 결과\n\n`;
+                    resultMsg += `✅ 자동 완납 처리 (${matchedLogs.length}건):\n${matchedLogs.length > 0 ? matchedLogs.join('\n') : '없음'}`;
+                    if (ambiguousLogs.length > 0) {
+                        resultMsg += `\n\n⚠️ 마스킹(O*O) 동명이인 후보 중복으로 보류된 내역:\n${ambiguousLogs.join('\n')}`;
+                    }
+                    alert(resultMsg);
+                } catch (err) {
+                    alert("입출금 파일을 읽는 중 오류가 발생했습니다.");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        /* =========================================================
+           11. 출결 전용 화면 (키오스크) & 4자리 비밀번호 잠금 해제 로직
+        ========================================================= */
+        window.openKioskMode = function() {
+            document.getElementById('kiosk-overlay').classList.remove('hidden');
+            localStorage.setItem('taekwondo_kiosk_active', 'true');
+            clearKey();
+        };
+
+        window.requestCloseKioskMode = function() {
+            currentPinInput = "";
+            updatePinDotsUI();
+            document.getElementById('kiosk-pin-modal').classList.remove('hidden');
+        };
+
+        window.closePinModal = function() {
+            currentPinInput = "";
+            updatePinDotsUI();
+            document.getElementById('kiosk-pin-modal').classList.add('hidden');
+        };
+
+        function updatePinDotsUI() {
+            const el = document.getElementById('pin-dots-display');
+            if (!el) return;
+            el.textContent = '●'.repeat(currentPinInput.length);
+        }
+
+        window.pressPinKey = function(num) {
+            if (currentPinInput.length < 4) {
+                currentPinInput += num;
+                updatePinDotsUI();
+                if (currentPinInput.length === 4) {
+                    setTimeout(verifyKioskPinAndExit, 120);
+                }
+            }
+        };
+
+        window.clearPinInput = function() {
+            currentPinInput = "";
+            updatePinDotsUI();
+        };
+
+        function verifyKioskPinAndExit() {
+            if (currentPinInput === kioskPin) {
+                closePinModal();
+                document.getElementById('kiosk-overlay').classList.add('hidden');
+                localStorage.setItem('taekwondo_kiosk_active', 'false');
+                clearKey();
+            } else {
+                alert("❌ 비밀번호가 일치하지 않습니다.");
+                clearPinInput();
+            }
+        }
+
+        function showToast(htmlMsg) {
+            const toast = document.getElementById('toast-popup');
+            toast.innerHTML = htmlMsg;
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.add('hidden'); }, 3500);
+        }
+
+        async function triggerAutoBotAndSync(kakaoKeyword, messageText, newRecord) {
+            const reqId = "REQ_" + newRecord.id;
+            processedSyncReqIds.add(reqId);
+
+            try {
+                const imgPing = new Image();
+                const topic = getSyncTopic(syncUserId);
+                const webhookUrl = `http://127.0.0.1:5005/send.gif?kw=${encodeURIComponent(kakaoKeyword)}&msg=${encodeURIComponent(messageText)}&rid=${reqId}&syncid=${encodeURIComponent(topic)}&uid=${encodeURIComponent(syncUserId)}`;
+                imgPing.src = webhookUrl;
+            } catch(e) {}
+
+            const clipboardPayload = `[ON_TKD_BOT:${kakaoKeyword}]\n${messageText}`;
+            try {
+                await navigator.clipboard.writeText(clipboardPayload);
+            } catch(e) {}
+
+            const topic = getSyncTopic(syncUserId);
+            if (topic) {
+                try {
+                    await fetch(`https://ntfy.sh/${topic}`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            cmd: "KAKAO_SEND",
+                            reqId: reqId,
+                            kw: kakaoKeyword,
+                            msg: messageText,
+                            attRecord: newRecord
+                        })
+                    });
+                } catch(e) {}
+            }
+        }
+
+        function renderAttendanceRecords() {
+            attendanceList.innerHTML = '';
+            const todayRecords = attendanceRecords.filter(record => ensureIsoDateOnRecord(record) === todayIsoStr).reverse();
+            if (todayRecords.length === 0) {
+                attendanceList.innerHTML = '<tr><td colspan="5" style="color:#888;">오늘 출석한 원생이 없습니다.</td></tr>';
+                return;
+            }
+            todayRecords.forEach(record => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${record.name}</strong></td>
+                    <td>${record.kakaoKeyword}</td>
+                    <td>${record.phone}</td>
+                    <td>${record.time}</td>
+                    <td><span style="color:var(--success-color); font-weight:bold;">⚡ 카톡 발송 및 실시간 동기화됨</span></td>
+                `;
+                attendanceList.appendChild(tr);
+            });
+        }
+
+        window.pressKey = function(num) {
+            if (currentInput.length < 4) {
+                currentInput += num;
+                displayEl.textContent = currentInput;
+                kioskDisplayEl.textContent = currentInput;
+            }
+        };
+        window.clearKey = function() {
+            currentInput = "";
+            displayEl.textContent = "";
+            kioskDisplayEl.textContent = "";
+        };
+
+        window.submitAttendance = async function() {
+            if (currentInput.length !== 4) {
+                alert("연락처 뒷자리 4자리를 정확히 입력해주세요.");
+                return;
+            }
+            const activeList = getActiveStudents();
+            const matchedStudent = activeList.find(s => {
+                const p1 = (s.motherPhone || '').replace(/[^0-9]/g, '');
+                const p2 = (s.fatherPhone || '').replace(/[^0-9]/g, '');
+                const p3 = (s.phone || '').replace(/[^0-9]/g, '');
+                return p1.endsWith(currentInput) || p2.endsWith(currentInput) || p3.endsWith(currentInput);
+            });
+            clearKey();
+
+            if (matchedStudent) {
+                const now = new Date();
+                const nowIso = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+                const displayName = formatNameWithGrade(matchedStudent.name, matchedStudent.birth, now.getFullYear());
+                const pureName = matchedStudent.name;
+                const timeStr = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+                const kakaoSearch = matchedStudent.kakaoName || matchedStudent.name;
+
+                const template = alimTemplateInput.value;
+                const message = template
+                    .replace('{도장명}', dojangName)
+                    .replace('{이름}', pureName)
+                    .replace('{시간}', timeStr);
+
+                const newRecord = {
+                    id: Date.now(),
+                    studentId: matchedStudent.id,
+                    name: displayName,
+                    pureName: pureName,
+                    kakaoKeyword: kakaoSearch,
+                    phone: getRepresentativePhone(matchedStudent),
+                    date: now.toLocaleDateString(),
+                    isoDate: nowIso,
+                    time: timeStr
+                };
+
+                attendanceRecords.push(newRecord);
+                localStorage.setItem('taekwondo_attendances', JSON.stringify(attendanceRecords));
+                renderAttendanceRecords();
+                renderPerfectAttendanceList();
+                updateDashboard();
+
+                showToast(`🥋 <strong>${pureName} 수련생 출석 완료!</strong><br><span style="font-size:0.85rem;">💬 카톡(${kakaoSearch}) 발송 및 실시간 동기화 중...</span>`);
+
+                await triggerAutoBotAndSync(kakaoSearch, message, newRecord);
+            } else {
+                alert("❌ 등록되지 않은 번호이거나 퇴관 처리된 원생입니다.\n(태블릿인 경우 우측 상단 [🔄 명단 동기화 받기]를 눌러주세요)");
+            }
+        };
+
+        /* =========================================================
+           12. 회비 수납 렌더링
+        ========================================================= */
+        window.setTuitionFilter = function(filterType) {
+            currentTuitionFilter = filterType;
+            document.getElementById('filter-all').classList.remove('active');
+            document.getElementById('filter-unpaid').classList.remove('active');
+            document.getElementById(`filter-${filterType}`).classList.add('active');
+            renderTuitionList();
+        };
+
+        window.toggleTuitionPaid = function(id) {
+            const index = students.findIndex(s => s.id === id);
+            if (index > -1) {
+                students[index].isPaid = !students[index].isPaid;
+                students[index].paidMemo = students[index].isPaid ? '수동 체크 완료' : '';
+                localStorage.setItem('taekwondo_students', JSON.stringify(students));
+                renderTuitionList();
+                updateDashboard();
+            }
+        };
+
+        function renderTuitionList() {
+            tuitionList.innerHTML = '';
+            const thisYear = new Date().getFullYear();
+            const activeList = getActiveStudents();
+            let displayStudents = currentTuitionFilter === 'unpaid' ? activeList.filter(s => !s.isPaid) : activeList;
+
+            if (displayStudents.length === 0) {
+                tuitionList.innerHTML = `<tr><td colspan="8" style="color:#888; padding:2rem;">해당하는 수련생이 없습니다.</td></tr>`;
+                return;
+            }
+            displayStudents.forEach(student => {
+                const tr = document.createElement('tr');
+                const badgeClass = student.isPaid ? 'status-paid' : 'status-unpaid';
+                const badgeText = student.isPaid ? '완납' : '미납';
+                const checked = student.isPaid ? 'checked' : '';
+                const info = getAgeAndGrade(student.birth, thisYear);
+                const gradeBadge = info.grade ? `<span class="grade-tag">[${info.grade}]</span>` : '';
+                const memoStr = student.paidMemo ? `<span style="color:#03543F; font-weight:bold; font-size:0.85rem;">${student.paidMemo}</span>` : '<span style="color:#aaa;">-</span>';
+
+                tr.innerHTML = `
+                    <td><strong>${student.name}</strong>${gradeBadge}</td>
+                    <td>${student.fatherName || '-'}</td>
+                    <td>${student.motherName || '-'}</td>
+                    <td>${getRepresentativePhone(student)}</td>
+                    <td>${student.joinDate || '-'}</td>
+                    <td><span class="status-badge ${badgeClass}">${badgeText}</span></td>
+                    <td>${memoStr}</td>
+                    <td><label><input type="checkbox" class="tuition-checkbox" onchange="toggleTuitionPaid(${student.id})" ${checked}> 납부확인</label></td>
+                `;
+                tuitionList.appendChild(tr);
+            });
+        }
+
+        /* =========================================================
+           13. 생일/일정 만년 캘린더 (재원생만 달력 칸에 표시)
+        ========================================================= */
+        window.jumpToYearMonth = function() {
+            currentYear = parseInt(yearSelect.value, 10);
+            currentMonth = parseInt(monthSelect.value, 10);
+            renderCalendar();
+        };
+        window.goToToday = function() {
+            const now = new Date();
+            currentYear = now.getFullYear();
+            currentMonth = now.getMonth();
+            renderCalendar();
+        };
+        window.changeMonth = function(step) {
+            currentMonth += step;
+            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+            renderCalendar();
+        };
+
+        function renderCalendar() {
+            if (currentYear > 2099) currentYear = 2099;
+            if (currentYear < 2000) currentYear = 2000;
+            yearSelect.value = currentYear;
+            monthSelect.value = currentMonth;
+
+            const grid = document.getElementById('calendar-days');
+            grid.innerHTML = '';
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const lastDate = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const activeList = getActiveStudents();
+
+            for (let i = 0; i < firstDay; i++) { grid.innerHTML += `<div class="cal-cell" style="background:#F4F7F9;"></div>`; }
+
+            for (let day = 1; day <= lastDate; day++) {
+                const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const memoText = calendarData[dateKey] || '';
+                let dayClass = "";
+                const dayOfWeek = new Date(currentYear, currentMonth, day).getDay();
+                if (dayOfWeek === 0) dayClass = "sun";
+                if (dayOfWeek === 6) dayClass = "sat";
+                const isToday = (dateKey === todayIsoStr) ? "today-cell" : "";
+
+                let birthdayHtml = "";
+                activeList.forEach(student => {
+                    if (student.birth) {
+                        const parts = student.birth.split('-');
+                        if (parts.length === 3 && parseInt(parts[1], 10) === (currentMonth + 1) && parseInt(parts[2], 10) === day) {
+                            const formattedName = formatNameWithGrade(student.name, student.birth, currentYear);
+                            birthdayHtml += `<div class="cal-birthday-item">🎂 ${formattedName}</div>`;
+                        }
+                    }
+                });
+
+                grid.innerHTML += `
+                    <div class="cal-cell ${isToday}">
+                        <div class="cal-date ${dayClass}">${day}</div>
+                        <div>${birthdayHtml}</div>
+                        <div class="cal-memo" contenteditable="true" data-date="${dateKey}" onblur="saveCalendarMemo(this)">${memoText}</div>
+                    </div>
+                `;
+            }
+        }
+
+        window.saveCalendarMemo = function(element) {
+            const dateKey = element.getAttribute('data-date');
+            const text = element.innerText.trim();
+            if (text !== "") calendarData[dateKey] = text;
+            else delete calendarData[dateKey];
+            localStorage.setItem('taekwondo_calendar', JSON.stringify(calendarData));
+        };
+
+        const navItems = document.querySelectorAll('.nav-menu li');
+        const sections = document.querySelectorAll('.section-container');
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                navItems.forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+                const targetId = this.getAttribute('data-target');
+                sections.forEach(section => {
+                    if (section.id === targetId) section.classList.remove('hidden');
+                    else section.classList.add('hidden');
+                });
+                if (targetId === 'dashboard') updateDashboard();
+                if (targetId === 'attendance') renderPerfectAttendanceList();
+                if (targetId === 'tuition') renderTuitionList();
+                if (targetId === 'calendar') renderCalendar();
+            });
+        });
+
+        renderDojangName();
+        renderStudents();
+        renderAttendanceRecords();
+        autoSetPerfectTargetDays();
+        renderTuitionList();
+        renderCalendar();
+        updateDashboard();
+        saveAndConnectSyncId();
+
+        // 이전에 출결 전용화면(키오스크)을 켜둔 상태였다면 새로고침 시에도 키오스크 잠금 유지
+        if (localStorage.getItem('taekwondo_kiosk_active') === 'true') {
+            openKioskMode();
+        }
+    </script>
+</body>
+</html>
